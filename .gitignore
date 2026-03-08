@@ -63,3 +63,8 @@ example_output/
 *.log
 *.tmp
 *.temp
+
+# Accidental / scratch (do not re-add)
+# ------------------------------------
+text.txt
+LICENSE copy
