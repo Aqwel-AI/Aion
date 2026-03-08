@@ -1,17 +1,19 @@
 # Aqwel Aion library - things to hide from the repo
 # ==============================================
+# Patterns apply recursively. After editing, run: git status --short
+# (ignored files only show with: git status --ignored)
 
 # Python
 # ------
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
 .Python
-*.pyd
+**/*.pyd
 *.egg
-*.egg-info/
-.eggs/
+**/.eggs/
+**/*.egg-info/
 
 # Build & distribution
 # --------------------
@@ -39,6 +41,7 @@ ENV/
 # OS junk
 # -------
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # Testing & tools
@@ -49,7 +52,7 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.ipynb_checkpoints/
+**/.ipynb_checkpoints/
 
 # Generated output
 # ----------------
