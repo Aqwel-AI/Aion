@@ -117,6 +117,12 @@ setup(
             "seaborn>=0.11.0",
         ],
 
+        # Transformer training (Aion Former: decoder-only, NumPy autograd)
+        "former": [
+            "matplotlib>=3.5.0",
+            "pyyaml>=6.0",
+        ],
+
         # Machine learning and AI stack
         "ai": [
             "scipy>=1.7.0",

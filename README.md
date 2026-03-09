@@ -49,8 +49,8 @@ Aion consolidates common research and development tasks into a consistent API: m
 
 ### High-level design
 
-- **Single package:** All public API lives under the `aion` package. Import via `import aion` or `from aion import maths, algorithms, visualization`, etc.
-- **Flat core + subpackages:** Core modules (maths, code, embed, evaluate, files, git, parser, pdf, prompt, snippets, text, utils, watcher, cli) are top-level modules inside `aion`. Two subpackages add domain-specific APIs: `aion.algorithms` (search, arrays, graphs) and `aion.visualization` (arrays, matrices, training, utils).
+- **Single package:** All public API lives under the `aion` package. Import via `import aion` or `from aion import maths, algorithms, visualization, former`, etc.
+- **Flat core + subpackages:** Core modules (maths, code, embed, evaluate, files, git, parser, pdf, prompt, snippets, text, utils, watcher, cli) are top-level modules inside `aion`. Subpackages: `aion.algorithms` (search, arrays, graphs), `aion.visualization` (arrays, matrices, training), and `aion.former` (transformer training: models, training, datasets, visualization).
 - **Optional dependencies:** Heavy features (embeddings, PDF generation, visualization, advanced maths) use optional imports and extras (`[ai]`, `[docs]`, `[full]`). Core behaviour works with base install.
 - **Entry point:** Package version and metadata are on `aion`; the CLI is exposed via `aion.cli` or the `main` entry point (e.g. `python -m aion.cli`).
 
@@ -73,17 +73,27 @@ aion/                          # Root package
 ├── utils.py                   # General utilities
 ├── watcher.py                 # Real-time file change monitoring
 ├── cli.py                     # Command-line interface
-├── algorithms/                # Subpackage: search, arrays, graphs
-│   ├── __init__.py            # Exports: binary_search, lower_bound, upper_bound, flatten_array, chunk_array, ...
-│   ├── search.py             # Binary/jump/exponential/linear search, bounds, first/last occurrence, peaks
-│   ├── arrays.py              # flatten, chunk, sliding_window, rolling_sum, remove_duplicates, pad, ...
-│   ├── graphs.py              # Placeholder (future: BFS, DFS, Dijkstra, toposort)
-│   ├── README.md              # Algorithm package documentation
-│   └── examples/              # Jupyter notebooks: search, array utilities
-│       ├── 01_search_algorithms.ipynb
-│       ├── 02_array_utilities.ipynb
-│       └── README.md
-└── visualization/             # Subpackage: 1D/2D and training plots
+    ├── algorithms/                # Subpackage: search, arrays, graphs
+    │   ├── __init__.py            # Exports: binary_search, lower_bound, upper_bound, flatten_array, chunk_array, ...
+    │   ├── search.py             # Binary/jump/exponential/linear search, bounds, first/last occurrence, peaks
+    │   ├── arrays.py              # flatten, chunk, sliding_window, rolling_sum, remove_duplicates, pad, ...
+    │   ├── graphs.py              # Placeholder (future: BFS, DFS, Dijkstra, toposort)
+    │   ├── README.md              # Algorithm package documentation
+    │   └── examples/              # Jupyter notebooks: search, array utilities
+    │       ├── 01_search_algorithms.ipynb
+    │       ├── 02_array_utilities.ipynb
+    │       └── README.md
+    ├── former/                    # Subpackage: transformer training (Aion Former)
+    │   ├── __init__.py            # Exports: Transformer, Trainer, TextDataset, plot_attention_map, ...
+    │   ├── core/                  # Tensor, autograd, matmul, softmax, layer_norm, attention ops
+    │   ├── models/                # Embedding, positional encoding, multi-head attention, feed-forward, transformer
+    │   ├── training/               # Trainer, Adam, cross_entropy_loss
+    │   ├── datasets/              # SimpleTokenizer, TextDataset, create_dataloader
+    │   ├── visualization/          # plot_attention_map, plot_training_metrics, plot_weight_spectrum
+    │   ├── experiments/           # train_small_model.py, config.yaml
+    │   ├── examples/              # attention_demo, text_generation
+    │   └── docs/                  # architecture.md
+    └── visualization/             # Subpackage: 1D/2D and training plots
     ├── __init__.py            # Exports: plot_array, plot_histogram, plot_confusion_matrix, plot_training_history, ...
     ├── arrays.py              # 1D plots (array, histogram, scatter, running mean, boxplot, density, cdf, ...)
     ├── matrices.py            # 2D plots (heatmap, confusion, surface, contour, correlation, attention, sparsity)
@@ -132,6 +142,8 @@ This installs the core package with numpy, watchdog, and gitpython. Enough for m
 ### Optional dependency groups
 
 ```bash
+pip install aqwel-aion[viz]   # Visualization (matplotlib, seaborn)
+pip install aqwel-aion[former] # Transformer training (Aion Former: matplotlib, pyyaml)
 pip install aqwel-aion[ai]     # ML stack: scipy, scikit-learn, pandas, matplotlib, transformers, torch, sentence-transformers, openai
 pip install aqwel-aion[docs]   # PDF/docs: reportlab, pillow
 pip install aqwel-aion[full]   # All optional dependencies including seaborn, faiss-cpu
@@ -259,6 +271,16 @@ The repository includes an `example.py` in the project root that demonstrates vi
 - **Real-time monitoring:** File change detection and callbacks via the watcher module.
 - **Git integration:** Status, commit history, branches, diffs, file history (optional dependency: GitPython).
 - **Utilities and CLI:** General helpers and command-line interface for common operations.
+
+### Aion Former — Transformer training
+
+- **Decoder-only (GPT-style) transformers** with NumPy-backed autograd: no PyTorch/TF required for small-scale experiments.
+- **Core:** `Tensor` with gradient tracking; `matmul`, `softmax`, `layer_norm`, `relu`, scaled dot-product attention.
+- **Model:** Embedding, sinusoidal positional encoding, multi-head attention, feed-forward blocks, pre-norm stack, LM head.
+- **Training:** Cross-entropy loss, Adam optimizer, `Trainer` with `train_step` / `train_epoch`.
+- **Data:** Character- or word-level tokenizer, sliding-window text dataset, batch loader.
+- **Visualization:** Attention heatmaps (per head/layer), training loss over epochs, weight eigenvalue/singular-value spectrum.
+- **Install:** `pip install aqwel-aion[former]`. Run: `python -m aion.former.experiments.train_small_model`, `python -m aion.former.examples.attention_demo`, `python -m aion.former.examples.text_generation`.
 
 ---
 
@@ -468,6 +490,32 @@ status = manager.status()
 commits = manager.get_commit_history(limit=10)
 ```
 
+### Aion Former — transformer training (optional: pip install aqwel-aion[former])
+
+```python
+import aion
+from aion.former import Transformer, Trainer
+from aion.former.datasets import create_dataloader
+from aion.former.visualization import plot_attention_map, plot_training_metrics
+
+text = "Your training corpus here. " * 100
+dataset, get_batch = create_dataloader(text, seq_length=64, batch_size=32, level="char")
+model = Transformer(
+    vocab_size=dataset.vocab_size,
+    embed_dim=128,
+    num_heads=4,
+    num_layers=2,
+    max_seq_len=64,
+)
+trainer = Trainer(model, lr=0.001)
+for epoch in range(10):
+    loss = trainer.train_epoch(get_batch, 50)
+    print(f"Epoch {epoch + 1}  loss = {loss:.4f}")
+plot_training_metrics(trainer.history)
+```
+
+Run from command line: `python -m aion.former.experiments.train_small_model`, `python -m aion.former.examples.attention_demo`, `python -m aion.former.examples.text_generation`.
+
 ---
 
 ## Module Reference
@@ -477,6 +525,7 @@ commits = manager.get_commit_history(limit=10)
 | `aion.maths` | Mathematics, statistics, linear algebra, ML helpers, signal processing. |
 | `aion.algorithms` | Search (binary, bounds, jump, exponential, etc.) and array utilities (flatten, chunk, window, dedupe, rolling sum, pad). |
 | `aion.visualization` | 1D/2D and training plots; heatmaps, confusion matrices, attention maps; save_plot utility. |
+| `aion.former` | Transformer training: Transformer, Trainer, TextDataset, tokenizer, attention/training/weight-spectrum plots. Install with `[former]`. |
 | `aion.embed` | Text embeddings and vector similarity (optional: sentence-transformers). |
 | `aion.evaluate` | Classification and regression metrics; file-based evaluation. |
 | `aion.code` | Code explanation, extraction, complexity, docstrings, code smells. |
@@ -578,8 +627,9 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Library Statistics
 
-- **15+ core modules** (maths, algorithms, visualization, embed, evaluate, code, prompt, snippets, pdf, parser, files, watcher, git, utils, text, cli).
+- **15+ core modules** (maths, algorithms, visualization, former, embed, evaluate, code, prompt, snippets, pdf, parser, files, watcher, git, utils, text, cli).
 - **71+ mathematical functions** in the maths module.
+- **Aion Former:** Decoder-only transformer training with NumPy autograd, multi-head attention, and visualization (optional `[former]` extra).
 - **Full research pipeline** from data and algorithms through visualization and documentation.
 - **Optional dependencies** for embeddings, PDF generation, and full ML stack; core and algorithms work with minimal dependencies (e.g. numpy, standard library).
 

@@ -74,9 +74,23 @@ from . import pdf
 # Import algorithms (search, arrays, graphs) and visualization (plots)
 from . import algorithms
 from . import visualization
+from . import former
 
-# Optional C++ extension (fast_sum; fallback to NumPy if not built)
-from ._core import fast_sum, using_native_extension
+# Optional C++ extension (fast numerical ops; fallback to NumPy if not built)
+from ._core import (
+    fast_sum,
+    fast_dot,
+    fast_norm2,
+    fast_mean,
+    fast_variance,
+    fast_argmax,
+    fast_relu,
+    fast_softmax,
+    fast_cumsum,
+    fast_matrix_vector_mul,
+    fast_lower_bound,
+    using_native_extension,
+)
 
 # Define the public API exports for the package
 __all__ = [
@@ -101,6 +115,17 @@ __all__ = [
     "pdf",              # PDF documentation module
     "algorithms",       # Search, arrays, graph utilities
     "visualization",    # Array/matrix/training plotting
+    "former",          # Transformer training (decoder-only, NumPy autograd)
     "fast_sum",         # Fast 1D sum (C++ when built)
+    "fast_dot",         # Fast dot product (C++ when built)
+    "fast_norm2",       # Fast L2 norm (C++ when built)
+    "fast_mean",        # Fast mean (C++ when built)
+    "fast_variance",    # Fast variance (C++ when built)
+    "fast_argmax",      # Fast argmax (C++ when built)
+    "fast_relu",        # Fast ReLU (C++ when built)
+    "fast_softmax",     # Fast softmax (C++ when built)
+    "fast_cumsum",      # Fast cumulative sum (C++ when built)
+    "fast_matrix_vector_mul",  # Fast matrix-vector product (C++ when built)
+    "fast_lower_bound",  # Fast lower_bound on sorted array (C++ when built)
     "using_native_extension",
 ]
