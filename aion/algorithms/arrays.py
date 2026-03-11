@@ -410,3 +410,5 @@ def pairwise(arr: list[Any]) -> list[Any]:
     return pair
 
 
+def fun():
+    pass
