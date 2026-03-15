@@ -1,4 +1,7 @@
 """Placeholder for graph traversal and shortest-path algorithms (BFS, DFS, Dijkstra, toposort)."""
+from platform import uname
+from queue import PriorityQueue
+
 """
 Graph Algorithms
 ================
@@ -24,8 +27,9 @@ Graphs are represented as adjacency lists: a mapping from node to list of neighb
 See also: aion/algorithms/README.md for full package documentation.
 """
 
-from typing import Dict, List, Any, Set
+from typing import Dict, List, Any, Set, Union
 from collections import deque
+import heapq
 
 
 def bfs(graph: Dict[Any, List[Any]], start: Any) -> List[Any]:
@@ -174,3 +178,127 @@ def toposort(graph: Dict[Any, List[Any]]) -> List[Any]:
     if len(order) != len(vertices):
         raise ValueError("Graph contains a cycle; topological sort is undefined")
     return order
+
+def dijkstra(start: str, graph: Dict[Any, List[Any]]) -> List[Any]:
+    """
+        Dijkstra's algorithm for computing shortest path distances.
+
+        Calculates the minimum distance from a starting node to all other
+        nodes in a weighted directed graph with non-negative edge weights.
+        The algorithm repeatedly relaxes edges and updates the shortest
+        known distance to each vertex.
+
+        Parameters
+        ----------
+        start : str
+            The starting node from which distances are calculated.
+        graph : dict
+            Directed weighted adjacency list where graph[node] is a dictionary
+            mapping neighboring nodes to edge weights.
+
+        Returns
+        -------
+        dict
+            A dictionary mapping each node to the shortest distance from
+            the start node.
+
+        Raises
+        ------
+        KeyError
+            If the start node is not present in the graph.
+
+        Notes
+        -----
+        - Computes shortest distances from the start node to all vertices.
+        - Assumes all edge weights are non-negative.
+        - Time complexity O(V * E) in this implementation due to repeated
+          edge relaxation.
+    """
+    if start not in graph:
+        raise KeyError(f"Start node {start!r} not in graph")
+    infinit = 100000000000000
+    shortest_path = dict()
+
+    for i in graph.keys():
+        if i == start:
+            shortest_path[i] = 0
+        else:
+            shortest_path[i] = infinit
+
+    for _ in range(len(graph) - 1):
+        for i in shortest_path:
+            for j, k in graph[i].items():
+                if shortest_path[j] > shortest_path[i] + k:
+                    shortest_path[j] = shortest_path[i] + k
+
+    return shortest_path
+
+def dijkstra_path(start: str, target: str, graph: Dict[Any, List[Any]]) -> List[Any]:
+    """
+        Dijkstra-based shortest path reconstruction.
+
+        Computes the shortest path between the start node and a target node
+        in a weighted directed graph. The algorithm first calculates the
+        shortest distances and keeps track of predecessors for each node,
+        then reconstructs the path from the target back to the start.
+
+        Parameters
+        ----------
+        start : str
+            The starting node.
+        target : str
+            The destination node.
+        graph : dict
+            Directed weighted adjacency list where graph[node] is a dictionary
+            mapping neighboring nodes to edge weights.
+
+        Returns
+        -------
+        list
+            A list of nodes representing the shortest path from start to
+            target, including both start and target.
+
+        Raises
+        ------
+        KeyError
+            If the start node is not present in the graph.
+
+        Notes
+        -----
+        - Uses repeated edge relaxation similar to Bellman-Ford style updates.
+        - Stores predecessor nodes to reconstruct the final path.
+        - Time complexity O(V * E) for this implementation.
+    """
+    if start not in graph:
+        raise KeyError(f"Start node {start!r} not in graph")
+    infinit = 100000000000000
+    previous = dict()
+    shortest_path = dict()
+
+    for i in graph.keys():
+        if i == start:
+            shortest_path[i] = 0
+        else:
+            shortest_path[i] = infinit
+
+    for _ in range(len(graph) - 1):  # only change
+        for res_val in shortest_path:
+            for val, keys in graph[res_val].items():
+                if shortest_path[val] > shortest_path[res_val] + keys:
+                    shortest_path[val] = keys + shortest_path[res_val]
+                    previous[val] = res_val
+
+    path = []
+    current = target
+
+    while current != start:
+        path.append(current)
+        current = previous[current]
+
+    path.append(start)
+    path.reverse()
+
+    return path
+
+def astar(graph: Dict[Any, List[Any]], start: str, goal: str) -> List[Any]:
+    pass

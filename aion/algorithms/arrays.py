@@ -5,7 +5,8 @@ Flattening, chunking, windowing, deduplication, rolling sums, and related
 helpers for list/sequence operations. Full package documentation:
 aion/algorithms/README.md
 """
-from typing import Any, Union
+from typing import Any, Union, List
+
 
 def flatten_array(arr: list[list[Any]]) -> list[Any]:
     """
@@ -409,6 +410,109 @@ def pairwise(arr: list[Any]) -> list[Any]:
 
     return pair
 
+def rotated_search(nums: List[int], target: int) -> int:
+    """
+       Search for an element in a rotated sorted array.
 
-def fun():
-    pass
+       Finds the index of a target value in an array that was originally
+       sorted in ascending order but then rotated at an unknown pivot.
+       The algorithm uses a modified binary search to determine which
+       half of the array is sorted and narrows the search accordingly.
+
+       Parameters
+       ----------
+       nums : list[int]
+           A rotated sorted list of integers.
+       target : int
+           The value to search for.
+
+       Returns
+       -------
+       int
+           The index of the target element if found.
+
+       Raises
+       ------
+       None
+
+       Notes
+       -----
+       - If the target element is not found, the function returns None.
+       - The algorithm runs in O(log n) time complexity.
+       - At each step, one half of the array is guaranteed to be sorted,
+         which allows binary search logic to be applied.
+       """
+    left = 0
+    right = len(nums) - 1
+
+    while left <= right:
+        mid = (left + right) // 2
+        if nums[mid] == target:
+            return mid
+        if nums[left] <= nums[mid]:
+            if nums[left] <= target < nums[mid]:
+                right = mid - 1
+            else:
+                left = mid + 1
+        else:
+            if nums[mid] < target <= nums[right]:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+    return None
+
+
+def moving_average(arr: list[Union[int, float]], k: int) -> list[Union[int, float]]:
+    """
+        Compute the moving average of a list using a sliding window.
+
+        Calculates the average of every contiguous subarray of size k
+        within the given list. Each window of k consecutive elements
+        produces one average value.
+
+        Example
+        -------
+        arr = [1, 2, 3, 4, 5]
+        k = 3
+        Output: [2.0, 3.0, 4.0]
+
+        Parameters
+        ----------
+        arr : list[int | float]
+            The input list containing numeric values.
+        k : int
+            The size of the sliding window.
+
+        Returns
+        -------
+        list[int | float]
+            A list containing the averages of each window.
+
+        Raises
+        ------
+        ValueError
+            If the list is empty or if k is greater than the length of the list.
+
+        Notes
+        -----
+        - Uses a sliding window approach over the list.
+        - Time complexity O(n * k) for this implementation.
+        - Produces len(arr) - k + 1 average values.
+        """
+    if not arr:
+        raise ValueError("List must not be empty")
+    if k > len(arr):
+        raise ValueError("Number can not be greater then size of the list")
+    averages = list()
+
+    for i in range(0, len(arr) - (k - 1)):
+        total = 0.0
+        for j in range(i, i + k):
+            total += arr[j]
+        total /= k
+        averages.append(total)
+
+    return averages
+
+print(moving_average([1, 2, 3, 4, 5], 3))
