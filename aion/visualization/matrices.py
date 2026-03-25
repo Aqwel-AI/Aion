@@ -543,3 +543,77 @@ def plot_matrix_sparsity(
 
     finalize_plot(title or "Matrix Sparsity", show)
     return fig
+
+
+
+
+
+def plot_calibration_curve(
+    y_true,           
+    y_prob,           
+    n_bins=10,
+    ax=None,
+    title="Calibration curve",
+    show=True
+):
+    """
+    Plot a calibration curve (reliability diagram).
+
+    Bins predicted probabilities and plots mean predicted value vs
+    fraction of positives in each bin. A well-calibrated model lies
+    along the diagonal.
+
+    Parameters
+    ----------
+    y_true : array-like
+        True binary labels (0 or 1).
+    y_prob : array-like
+        Predicted probabilities for the positive class.
+    n_bins : int, default 10
+        Number of bins for the calibration curve.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If None, a new figure is created.
+    title : str, default "Calibration curve"
+        Title of the plot.
+    show : bool, default True
+        Whether to display the plot.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        The created matplotlib figure.
+    """
+    y_true = np.asarray(y_true)
+    y_prob = np.asarray(y_prob)
+    if y_true.shape != y_prob.shape:
+        raise ValueError("y_true and y_prob must have the same shape")
+
+    bin_edges = np.linspace(0, 1, n_bins + 1)
+    bin_indices = np.clip(
+        np.digitize(y_prob, bin_edges[1:-1], right=False), 0, n_bins - 1
+    )
+    bin_means = np.array(
+        [y_prob[bin_indices == i].mean() if (bin_indices == i).any() else np.nan
+         for i in range(n_bins)]
+    )
+    bin_freqs = np.array(
+        [y_true[bin_indices == i].mean() if (bin_indices == i).any() else np.nan
+         for i in range(n_bins)]
+    )
+    valid = ~(np.isnan(bin_means) | np.isnan(bin_freqs))
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
+
+    ax.plot([0, 1], [0, 1], "k--", label="Perfectly calibrated")
+    ax.plot(bin_means[valid], bin_freqs[valid], "s-", label="Model")
+    ax.set_xlabel("Mean predicted probability")
+    ax.set_ylabel("Fraction of positives")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.legend(loc="lower right")
+
+    finalize_plot(title, show)
+    return fig

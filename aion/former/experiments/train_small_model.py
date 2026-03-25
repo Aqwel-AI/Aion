@@ -10,7 +10,7 @@ import numpy as np
 import yaml
 
 from aion.former.models import Transformer
-from aion.former.training import Trainer
+from aion.former.training import Trainer, save_transformer_weights
 from aion.former.datasets import TextDataset, create_dataloader
 from aion.former.visualization import plot_training_metrics, plot_weight_spectrum
 
@@ -111,6 +111,13 @@ def main():
             print("Saved training_metrics.png")
     except Exception as e:
         print("Could not save plots:", e)
+
+    weights_path = os.path.join(os.path.dirname(__file__), "weights.npz")
+    try:
+        save_transformer_weights(model, weights_path)
+        print(f"Saved weights to {weights_path}")
+    except Exception as e:
+        print("Could not save weights:", e)
 
     print("Done. Use aion.former.examples.text_generation with the same tokenizer/dataset to generate text.")
 

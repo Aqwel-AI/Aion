@@ -45,6 +45,13 @@ from . import text
 # Import the file management module for file operations and organization
 from . import files
 
+# Canonical dataset loaders (text / CSV / JSONL) and safe I/O primitives
+from . import datasets
+from . import io
+
+# Remote LLM APIs (OpenAI, Gemini, Anthropic, OpenAI-compatible servers)
+from . import providers
+
 # Import the code parsing module for language detection and code analysis
 from . import parser
 
@@ -101,6 +108,9 @@ __all__ = [
     "__copyright__",    # Copyright information
     "text",             # Text processing module
     "files",            # File management module
+    "datasets",         # Text / CSV / JSONL loaders
+    "io",               # Streaming, atomic writes, checksums
+    "providers",        # OpenAI / Gemini / Anthropic / compatible APIs
     "parser",           # Code parsing module
     "watcher",          # File watching module
     "utils",            # Utilities module

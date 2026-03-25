@@ -13,6 +13,23 @@ from .loss import cross_entropy_loss
 from .optimizer import Adam
 
 
+def _make_causal_attention_mask(
+    seq_len: int,
+    num_heads: int,
+    batch_size: int,
+    mask_value: float = -1e9,
+) -> np.ndarray:
+    """
+    Create an additive causal mask for attention scores.
+
+    Disallows attention to future positions (upper triangular part).
+    Returned shape: (batch, num_heads, seq, seq).
+    """
+    base = np.zeros((seq_len, seq_len), dtype=np.float64)
+    base[np.triu_indices(seq_len, k=1)] = mask_value
+    return np.broadcast_to(base[None, None, :, :], (batch_size, num_heads, seq_len, seq_len)).copy()
+
+
 # -----------------------------------------------------------------------------
 # Trainer
 # -----------------------------------------------------------------------------
@@ -71,6 +88,13 @@ class Trainer:
             Scalar loss for this batch.
         """
         self.optimizer.zero_grad()
+        if mask is None:
+            # Next-token prediction needs causal attention: position i can only
+            # attend to <= i within the sequence.
+            seq_len = int(token_ids.shape[1])
+            num_heads = int(getattr(self.model, "num_heads", 1))
+            batch_size = int(token_ids.shape[0])
+            mask = _make_causal_attention_mask(seq_len, num_heads, batch_size)
         logits, _ = self.model.forward(token_ids, mask)
         loss = cross_entropy_loss(logits, targets)
         loss.backward()
@@ -130,7 +154,11 @@ class Trainer:
         for _ in range(num_batches):
             token_ids, targets = get_batch()
             self.optimizer.zero_grad()
-            logits, _ = self.model.forward(token_ids)
+            seq_len = int(token_ids.shape[1])
+            num_heads = int(getattr(self.model, "num_heads", 1))
+            batch_size = int(token_ids.shape[0])
+            mask = _make_causal_attention_mask(seq_len, num_heads, batch_size)
+            logits, _ = self.model.forward(token_ids, mask)
             loss = cross_entropy_loss(logits, targets)
             total_loss += float(loss._data)
         return total_loss / num_batches
