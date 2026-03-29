@@ -44,3 +44,14 @@ def load_jsonl(path: PathLike, *, encoding: str = "utf-8") -> List[Any]:
         Parsed objects in file order.
     """
     return list(iter_jsonl(path, encoding=encoding))
+
+
+def load_json_lines_file(path: PathLike, *, encoding: str = "utf-8") -> List[Any]:
+    """
+    Load a JSON Lines file (``.jsonl``): one JSON value per non-empty line.
+
+    Same behavior as :func:`load_jsonl`. Prefer this name when mirroring a
+    line-by-line read tutorial. Do not confuse with :func:`json.loads`, which
+    parses a single JSON string, not a file path.
+    """
+    return load_jsonl(path, encoding=encoding)

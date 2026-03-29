@@ -6,7 +6,7 @@ CRUD helpers that print on error.
 """
 
 from .streaming import iter_lines, read_chunks
-from .atomic import atomic_write, atomic_write_bytes
+from .atomic import atomic_write, atomic_write_bytes, save_automatically
 from .checksum import file_sha256, verify_sha256
 
 __all__ = [
@@ -14,6 +14,7 @@ __all__ = [
     "read_chunks",
     "atomic_write",
     "atomic_write_bytes",
+    "save_automatically",
     "file_sha256",
     "verify_sha256",
 ]
