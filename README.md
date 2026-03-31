@@ -68,37 +68,113 @@ Aion consolidates common research and development tasks into a consistent API: m
 
 ### Directory structure
 
+Layout below matches the repository as shipped (file names only; omit your local `.venv`, build artifacts, and caches).
+
+#### Repository root
+
 ```
-aion/                          # Root package
-├── __init__.py                # Version, metadata, exports (incl. datasets, io, providers, fast_*)
-├── _core.py                   # Optional C++ bridge: fast_sum, fast_dot, fast_softmax, … (NumPy fallback)
-├── maths.py                   # Mathematics, statistics, linear algebra, ML helpers, signal processing
-├── code.py                    # Code analysis and quality (explain, extract, complexity, docstrings, smells)
-├── embed.py                   # Text embeddings and similarity (optional: sentence-transformers)
-├── evaluate.py                # Classification/regression metrics, file-based evaluation
-├── files.py                   # File and directory operations
-├── git.py                     # Git integration (optional: gitpython)
-├── parser.py                  # Language detection and code parsing
-├── pdf.py                     # Documentation generation (PDF, text, Markdown; optional: reportlab)
-├── prompt.py                  # Prompt templates and utilities
-├── snippets.py                # Code snippet utilities
-├── text.py                    # Text processing
-├── utils.py                   # General utilities
-├── watcher.py                 # Real-time file change monitoring
-├── cli.py                     # Command-line interface
-├── datasets/                  # Text / CSV / JSONL loaders, batching, schema validation
+.                              # Project root (clone / sdist)
+├── README.md
+├── LICENSE
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── MANIFEST.in
+├── pyproject.toml
+├── setup.py
+├── requirements.txt
+├── example.py                 # Runnable demo (algorithms / visualization)
+├── main.py                    # CLI entry script
+├── src/
+│   └── aion_core.cpp          # C++ sources for optional aion._aion_core (pybind11)
+├── tests/
+│   └── test_smoke.py          # Pytest smoke tests
+└── aion/                      # Python package (see next tree)
+```
+
+#### Package `aion/`
+
+```
+aion/                          # Top-level entries in lexicographic order (same as ls | sort)
+├── __init__.py
+├── _core.py                   # fast_* bridge → aion._aion_core or NumPy fallback
+├── algorithms/
+│   ├── README.md
+│   ├── __init__.py
+│   ├── arrays.py
+│   ├── examples/
+│   │   ├── 01_search_algorithms.ipynb
+│   │   ├── 02_array_utilities.ipynb
+│   │   └── README.md
+│   ├── graphs.py
+│   └── search.py
+├── cli.py
+├── code.py
+├── datasets/
 │   ├── __init__.py
 │   ├── batch.py
 │   ├── csv.py
 │   ├── jsonl.py
 │   ├── schema.py
 │   └── text.py
-├── io/                        # Streaming reads, atomic writes, SHA-256 helpers
+├── embed.py
+├── evaluate.py
+├── files.py
+├── former/                    # Sub-entries in lexicographic order (ls | sort)
+│   ├── README.md
+│   ├── __init__.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── autograd.py
+│   │   ├── operations.py
+│   │   └── tensor.py
+│   ├── datasets/
+│   │   ├── __init__.py
+│   │   ├── loader.py
+│   │   └── tokenizer.py
+│   ├── docs/
+│   │   └── architecture.md
+│   ├── example.py
+│   ├── examples/
+│   │   ├── README.md
+│   │   ├── __init__.py
+│   │   ├── attention_demo.py
+│   │   ├── attention_demo_all_heads.png
+│   │   ├── attention_demo_head0.png
+│   │   └── text_generation.py
+│   ├── examples_results/
+│   │   └── README.md
+│   ├── experiments/
+│   │   ├── __init__.py
+│   │   ├── config.yaml
+│   │   └── train_small_model.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── attention.py
+│   │   ├── embedding.py
+│   │   ├── feedforward.py
+│   │   └── transformer.py
+│   ├── training/
+│   │   ├── __init__.py
+│   │   ├── checkpoint.py
+│   │   ├── loss.py
+│   │   ├── optimizer.py
+│   │   └── trainer.py
+│   └── visualization/
+│       ├── __init__.py
+│       ├── attention_map.py
+│       ├── training_metrics.py
+│       └── weight_spectrum.py
+├── git.py
+├── io/
 │   ├── __init__.py
 │   ├── atomic.py
 │   ├── checksum.py
 │   └── streaming.py
-├── providers/                 # OpenAI, Gemini, Anthropic, OpenAI-compatible chat providers
+├── maths.py
+├── parser.py
+├── pdf.py
+├── prompt.py
+├── providers/
 │   ├── __init__.py
 │   ├── anthropic_provider.py
 │   ├── base.py
@@ -106,44 +182,37 @@ aion/                          # Root package
 │   ├── factory.py
 │   ├── gemini_provider.py
 │   ├── generic_openai.py
-│   ├── openai_provider.py
-│   └── http_utils.py
-├── algorithms/                # Subpackage: search, arrays, graphs
-│   ├── __init__.py            # Exports: binary_search, lower_bound, upper_bound, flatten_array, chunk_array, …
-│   ├── search.py              # Binary/jump/exponential/linear search, bounds, peaks, …
-│   ├── arrays.py              # flatten, chunk, sliding_window, rolling_sum, remove_duplicates, pad, …
-│   ├── graphs.py              # Placeholder (future graph algorithms)
+│   ├── http_utils.py
+│   └── openai_provider.py
+├── snippets.py
+├── text.py
+├── utils.py
+├── visualization/
 │   ├── README.md
-│   └── examples/              # Jupyter: search, array utilities
-│       ├── 01_search_algorithms.ipynb
-│       ├── 02_array_utilities.ipynb
-│       └── README.md
-├── former/                    # Subpackage: transformer training (Aion Former)
 │   ├── __init__.py
-│   ├── core/                  # Tensor, autograd, ops
-│   ├── models/                # Transformer blocks
-│   ├── training/              # Trainer, optimizers, loss
-│   ├── datasets/              # Tokenizer, TextDataset, dataloader (Former-specific)
-│   ├── visualization/
-│   ├── experiments/
+│   ├── arrays.py
+│   ├── classification.py
 │   ├── examples/
-│   └── docs/
-└── visualization/             # Subpackage: 1D/2D and training plots
-    ├── __init__.py
-    ├── arrays.py
-    ├── matrices.py
-    ├── training.py
-    ├── utils.py
-    ├── README.md
-    ├── examples/              # Jupyter: array, matrix, training
-    │   ├── 01_array_visualization.ipynb
-    │   ├── 02_matrix_visualization.ipynb
-    │   ├── 03_training_visualization.ipynb
-    │   └── README.md
-    └── examples_visualization/  # Example PNG outputs
+│   │   ├── 01_array_visualization.ipynb
+│   │   ├── 02_matrix_visualization.ipynb
+│   │   ├── 03_training_visualization.ipynb
+│   │   └── README.md
+│   ├── examples_visualization/
+│   │   ├── example_array.png
+│   │   ├── example_array_mean.png
+│   │   ├── example_confusion_matrix.png
+│   │   ├── example_histogram.png
+│   │   ├── example_matrix_heatmap.png
+│   │   ├── example_multiple_arrays.png
+│   │   ├── example_scatter.png
+│   │   └── example_training_history.png
+│   ├── matrices.py
+│   ├── training.py
+│   └── utils.py
+└── watcher.py
 ```
 
-Repository root also contains `example.py` (runnable demo), `main.py` (CLI entry), `tests/` (pytest smoke tests), `src/aion_core.cpp` (optional extension), `pyproject.toml` / `setup.py`, `requirements.txt`, `CONTRIBUTING.md`, `CHANGELOG.md`, and `LICENSE`.
+After a local build, you may also see **`aion/_aion_core*.so`** (macOS/Linux) or **`aion/_aion_core*.pyd`** (Windows) next to these sources; those binaries are compiled outputs, not part of the documented source tree. **`__pycache__/`** is created at import time.
 
 ### Design principles
 
@@ -708,12 +777,12 @@ This repository is open source. The following **should show** (and are committed
 | **Source** | `aion/**/*.py`, `src/aion_core.cpp` |
 | **Tests** | `tests/` (pytest smoke tests; install with `pip install -e ".[dev]"`) |
 | **Examples** | `example.py`, `main.py`, Jupyter notebooks in `aion/algorithms/examples/`, `aion/visualization/examples/` |
-| **Example assets** | Small example images in `aion/visualization/examples_visualization/*.png` (for docs) |
+| **Example assets** | `aion/visualization/examples_visualization/*.png` (plot previews); `aion/former/examples/*.png` (attention demos); `aion/former/examples_results/` (see folder README; PNG outputs may be gitignored) |
 | **Repo meta** | `.gitignore` |
 
 The following **do not show** (ignored via `.gitignore`):
 
-- Build artifacts: `build/`, `dist/`, `*.egg`, `*.egg-info/`
+- Build artifacts: `build/`, `dist/`, `*.egg`, `*.egg-info/`, compiled extension modules under `aion/_aion_core*.so` / `aion/_aion_core*.pyd`
 - Python cache: `__pycache__/`, `*.pyc`, `*.pyo`
 - Virtual environments: `.venv/`, `venv/`, `env/`
 - Secrets: `.env`, `.env.*` (never commit; use `.env.example` as a template if needed)
