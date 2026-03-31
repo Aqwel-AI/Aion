@@ -28,7 +28,6 @@ from aion.former import (
     Trainer,
     TextDataset,
     create_dataloader,
-    SimpleTokenizer,
     plot_attention_map,
     plot_training_metrics,
 )
@@ -140,27 +139,37 @@ def _examples_results_dir():
     return d
 
 
+def _try_import_matplotlib_pyplot():
+    """Return matplotlib.pyplot if available, else None."""
+    try:
+        import importlib
+        return importlib.import_module("matplotlib.pyplot")
+    except ImportError:
+        return None
+
+
 def example_attention_visualization(model, dataset, attention_weights_list, inputs):
     """
     Plot attention for first layer, first head; save to examples_results.
     """
-    try:
-        import matplotlib.pyplot as plt
-        tokens = [dataset.tokenizer.reverse_vocab.get(i, "?") for i in inputs[0]]
-        plot_attention_map(
-            attention_weights_list[0],
-            tokens=tokens,
-            layer=0,
-            head=0,
-            title="Layer 0 Head 0",
-        )
-        plt.tight_layout()
-        path = os.path.join(_examples_results_dir(), "example_attention.png")
-        plt.savefig(path, dpi=120)
-        plt.close()
-        print("Saved", path)
-    except ImportError:
+    plt = _try_import_matplotlib_pyplot()
+    if plt is None:
         print("Skipping attention plot (matplotlib not available)")
+        return
+
+    tokens = [dataset.tokenizer.reverse_vocab.get(i, "?") for i in inputs[0]]
+    plot_attention_map(
+        attention_weights_list[0],
+        tokens=tokens,
+        layer=0,
+        head=0,
+        title="Layer 0 Head 0",
+    )
+    plt.tight_layout()
+    path = os.path.join(_examples_results_dir(), "example_attention.png")
+    plt.savefig(path, dpi=120)
+    plt.close()
+    print("Saved", path)
 
 
 # -----------------------------------------------------------------------------
@@ -207,15 +216,16 @@ def example_plot_training_metrics(trainer):
     """
     Plot loss curve from trainer history; save to examples_results.
     """
-    try:
-        import matplotlib.pyplot as plt
-        plot_training_metrics(trainer.history, title="Example training loss")
-        path = os.path.join(_examples_results_dir(), "example_training_metrics.png")
-        plt.savefig(path, dpi=120)
-        plt.close()
-        print("Saved", path)
-    except ImportError:
+    plt = _try_import_matplotlib_pyplot()
+    if plt is None:
         print("Skipping training plot (matplotlib not available)")
+        return
+
+    plot_training_metrics(trainer.history, title="Example training loss")
+    path = os.path.join(_examples_results_dir(), "example_training_metrics.png")
+    plt.savefig(path, dpi=120)
+    plt.close()
+    print("Saved", path)
 
 
 # -----------------------------------------------------------------------------
