@@ -1,6 +1,6 @@
 [project]
 name = "aqwel-aion"
-version = "0.1.8"
+version = "0.1.9"
 description = "Complete AI Research & Development Library with Advanced Mathematics and ML Tools"
 readme = "README.md"
 license = {text = "Apache-2.0"}

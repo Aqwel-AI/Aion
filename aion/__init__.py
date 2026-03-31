@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aqwel-Aion v0.1.8 - Complete AI Research & Development Library
+Aqwel-Aion v0.1.9 - Complete AI Research & Development Library
 ==============================================================
 
 A comprehensive Python utility library by Aqwel AI for AI research,
@@ -27,7 +27,7 @@ https://aqwelai.xyz/
 """
 
 # Define the current version of the package
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 
 # Define the author information
 __author__ = "Aksel Aghajanyan"
