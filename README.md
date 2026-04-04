@@ -2,7 +2,13 @@
 
 **Aqwel-Aion v0.1.9 — Complete AI Research and Development Library**
 
-Aion is an open-source Python utility library by Aqwel AI for AI research, machine learning development, and advanced data science workflows. It provides mathematical operations, algorithm utilities, visualization, model evaluation, documentation generation, dataset loading (text, CSV, JSONL), safe low-level I/O, remote LLM provider clients, optional accelerated numerics, and development tooling in a single package.
+[![PyPI](https://img.shields.io/pypi/v/aqwel-aion?label=PyPI)](https://pypi.org/project/aqwel-aion/)
+[![Python](https://img.shields.io/pypi/pyversions/aqwel-aion?label=Python)](https://pypi.org/project/aqwel-aion/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+Aion is an open-source Python library by **Aqwel AI** for research and production-style ML workflows: numerics and algorithms, **datasets & safe I/O**, **multi-vendor LLM clients**, **tool calling and RAG primitives**, visualization (including **3D** and multi-page reports), optional **native-accelerated** helpers, and small **infra utilities** (config, env, logging, benchmarks, serialization). Install only the extras you need—core usage stays lightweight.
+
+**Links:** [Website](https://aqwelai.xyz/) · [Documentation](https://aqwelai.xyz/#/docs) · [PyPI](https://pypi.org/project/aqwel-aion/)
 
 ---
 
@@ -25,6 +31,8 @@ Aion is an open-source Python utility library by Aqwel AI for AI research, machi
 - [Overview](#overview)
 - [What's new in 0.1.9](#whats-new-in-019)
 - [Architecture and structure](#architecture-and-structure)
+- [Package architecture and diagrams](#package-architecture-and-diagrams)
+- [Optional dependency matrix](#optional-dependency-matrix)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -42,7 +50,11 @@ Aion is an open-source Python utility library by Aqwel AI for AI research, machi
 
 ## Overview
 
-Aion consolidates common research and development tasks into a consistent API: mathematics and statistics, search and array algorithms, 1D/2D and training visualization, text embeddings, prompt engineering, code analysis, model evaluation, PDF documentation generation, file management, real-time file watching, Git integration, canonical dataset pipelines, streaming and atomic file I/O, and multi-vendor chat completions. The library is designed for use in scripts, notebooks, and production pipelines, with optional dependencies so you can install only what you need.
+Aion gives you one coherent **import surface** (`import aion`) for work that usually spans half a dozen ad-hoc utilities: **linear algebra and stats**, **classical algorithms** (search, arrays, **graphs** with shortest paths and components), **plotting** (1D/2D/training/**3D**, PDF/HTML figure bundles), **embeddings and evaluation**, **PDF/docs generation**, and **systems-style helpers** (files, watcher, Git).
+
+**LLM-era additions** in recent releases include **`aion.providers`** (REST chat for OpenAI, Gemini, Anthropic, and OpenAI-compatible servers), **`aion.tools`** (schemas, registry, multi-turn **tool loops** with `complete_turn`), **`aion.rag`** (chunking, **vector stores**, optional FAISS, `SimpleRAGIndex`), plus **`aion.datasets`** / **`aion.io`** for ETL-shaped pipelines. **Developer experience** modules cover **config** (TOML/YAML + env merge), **`.env` loading**, **logging setup**, **benchmarks**, **JSON-safe serialization**, optional **pandas** / **sklearn** helpers, **packaging** utilities, and **test doubles** for providers.
+
+The design goal is simple: **progressive disclosure**—core installs stay small; heavy stacks are behind **named extras** (`[viz]`, `[ai]`, `[full]`, `[tools]`, `[rag]`, and others).
 
 ---
 
@@ -53,18 +65,111 @@ Aion consolidates common research and development tasks into a consistent API: m
 - **`aion.providers`** — Chat-style clients for OpenAI, Google Gemini, Anthropic, and OpenAI-compatible HTTP APIs; factory helpers (`create_provider`, `supported_providers`) and typed errors (`ProviderError`). API keys use the usual vendor environment variables (see module docstrings).
 - **Optional native numerics** — `aion._core` exposes `fast_sum`, `fast_dot`, `fast_mean`, `fast_softmax`, `fast_lower_bound`, and related helpers; uses the `aion._aion_core` C++ extension when built with pybind11, otherwise NumPy-backed fallbacks. Use `using_native_extension` to detect availability.
 - **Tests** — Repository `tests/` includes smoke coverage for core utilities (e.g. datasets batching and schema checks). Run with `pytest` after `pip install -e ".[dev]"`.
+- **`aion.tools`** — `function_tool`, `ToolRegistry`, `run_tool_loop` with `OpenAIProvider.complete_turn`; `post_json_with_retry`, `TokenBucket`, optional token estimates (`[tools]` → tiktoken).
+- **`aion.rag`** — `chunk_text`, `MemoryVectorStore`, `FaissVectorStore` (if FAISS installed), `SimpleRAGIndex` (`[rag]` extra).
+- **`aion.config` / `aion.env` / `aion.logging_utils`** — Load TOML/YAML, merge `AION_*` env overrides, parse `.env`, configure `logging`.
+- **`aion.benchmarks`**, **`aion.serialization`**, **`aion.metrics`**, **`aion.dataframe`**, **`aion.packaging`**, **`aion.testing`** — Timings, JSON helpers, Brier/reliability bins, optional pandas splits, `read_version_from_init`, `FakeToolProvider`.
+- **Graphs** — `dijkstra`, `connected_components`, `shortest_path_unweighted`.
+- **Visualization** — `plot_3d_scatter`, `plot_3d_surface`, `save_figures_pdf`, `figures_to_html_img_tags`.
+- **Providers** — Structured `complete_turn` → `AssistantTurn` with `tool_calls` (OpenAI + OpenAI-compatible).
 
 ---
 
 ## Architecture and structure
 
+This part of the README is the **structural map** of Aion: conceptual layers (diagrams), design rules, and a **file-level tree** of the `aion/` package that matches the repository.
+
+### Package architecture and diagrams
+
+The diagrams below are [Mermaid](https://mermaid.js.org/)—they render on GitHub and in many Markdown viewers.
+
+#### Layered stack (how capabilities build on each other)
+
+```mermaid
+flowchart TB
+  Foundation[Foundation NumPy plus stdlib]
+  Core[Core maths algorithms parser code files text utils watcher evaluate]
+  DataIO[datasets and io]
+  LLM[providers tools and embed]
+  RAGModule[rag]
+  VizDoc[visualization and pdf]
+  Former[former transformer stack]
+  Ops[config env logging_utils benchmarks serialization metrics dataframe packaging testing]
+  Foundation --> Core
+  Core --> DataIO
+  Core --> LLM
+  DataIO --> RAGModule
+  LLM --> RAGModule
+  Core --> VizDoc
+  Core --> Former
+  Foundation --> Ops
+```
+
+#### Conceptual module map (import-oriented)
+
+```mermaid
+flowchart LR
+  subgraph importSurface [Typical import paths]
+    A["import aion"]
+    B["aion.algorithms"]
+    C["aion.visualization"]
+    D["aion.providers"]
+    E["aion.tools"]
+    F["aion.rag"]
+  end
+  A --> B
+  A --> C
+  A --> D
+  D --> E
+  A --> F
+```
+
+#### Tool-calling loop (OpenAI-shaped providers)
+
+```mermaid
+sequenceDiagram
+  participant App as Your script
+  participant Loop as run_tool_loop
+  participant API as OpenAIProvider.complete_turn
+  participant Reg as ToolRegistry
+  App->>Loop: messages plus tool defs
+  Loop->>API: complete_turn
+  API-->>Loop: AssistantTurn tool_calls
+  loop Each tool call
+    Loop->>Reg: call name plus JSON args
+    Reg-->>Loop: tool message content
+  end
+  Loop->>API: follow-up with tool results
+  API-->>Loop: final text
+  Loop-->>App: text plus full history
+```
+
+#### RAG pipeline (reference implementation)
+
+```mermaid
+flowchart LR
+  T[Raw text] --> CH[chunk_text]
+  CH --> E[embed_text]
+  E --> VS[VectorStore]
+  Q[User query] --> EQ[embed_text]
+  EQ --> SR[search top-k]
+  VS --> SR
+  SR --> H[ScoredChunk hits]
+```
+
 ### High-level design
 
-- **Single package:** All public API lives under the `aion` package. Import via `import aion` or `from aion import maths, datasets, io, providers, algorithms, visualization, former`, etc.
-- **Flat core + subpackages:** Core modules (`maths`, `code`, `embed`, `evaluate`, `files`, `git`, `parser`, `pdf`, `prompt`, `snippets`, `text`, `utils`, `watcher`, `cli`) and **`_core`** (fast numerics bridge) are top-level inside `aion`. First-class subpackages: **`datasets`** (loaders), **`io`** (streaming/atomic/checksums), **`providers`** (LLM APIs), **`algorithms`**, **`visualization`**, and **`former`**.
-- **Optional dependencies:** Heavy features (embeddings, PDF generation, visualization, advanced maths, full ML stack) use optional imports and extras (`[ai]`, `[docs]`, `[full]`). Provider calls need network access and vendor SDK credentials via environment variables; core behaviour works with the base install.
-- **Optional native extension:** `src/aion_core.cpp` plus pybind11 builds `aion._aion_core` for accelerated primitives; without a build, `_core` falls back to NumPy.
-- **Entry point:** Package version and metadata are on `aion`; the CLI is exposed via `aion.cli` or the `main` entry point (e.g. `python -m aion.cli`).
+- **Single package:** Public APIs live under `aion`. Prefer `import aion` and attribute access, or explicit `from aion.X import …` for subpackages.
+- **Core single-file modules:** `maths`, `code`, `embed`, `evaluate`, `files`, `git`, `parser`, `pdf`, `prompt`, `snippets`, `text`, `utils`, `watcher`, `cli`, plus **`_core`** (`fast_*` bridge to optional native code).
+- **Data and control plane:** `datasets` (loaders, batching, schema checks), `io` (streaming, atomic writes, checksums), `config`, `env`, `logging_utils`.
+- **LLM surface:** `providers` (chat REST, `complete` and `complete_turn` where supported), `tools` (OpenAI-style tool JSON, registry, retries, token bucket, optional tiktoken).
+- **Retrieval:** `rag` (chunking, `MemoryVectorStore`, optional `FaissVectorStore`, `SimpleRAGIndex`).
+- **Algorithms and visualization:** `algorithms` (search, arrays, **graphs**: BFS, DFS, toposort, Dijkstra, components, unweighted shortest path), `visualization` (1D/2D/training/**3D**, `save_figures_pdf`, HTML figure bundles).
+- **Former:** NumPy autograd transformer training (`aion.former.*`), separate from `aion.datasets`.
+- **Quality and maintainers:** `benchmarks`, `serialization`, `metrics`, `dataframe`, `packaging`, `testing`.
+- **Optional dependencies:** Heavy stacks behind extras (`[viz]`, `[ai]`, `[docs]`, `[full]`, `[tools]`, `[rag]`, `[config]`, `[metrics]`, …). LLM calls need network + API keys. **No `eval`** in tool execution—arguments are JSON-parsed and passed to registered callables only.
+- **Native extension:** `src/aion_core.cpp` + pybind11 produces `aion._aion_core`; otherwise NumPy fallbacks.
+- **Entry points:** `aion.cli`, package metadata on `aion`, and repo `main.py` for CLI experiments.
 
 ### Directory structure
 
@@ -91,12 +196,14 @@ Layout below matches the repository as shipped (file names only; omit your local
 └── aion/                      # Python package (see next tree)
 ```
 
-#### Package `aion/`
+#### Package `aion/` (complete source tree)
+
+Top-level names follow **lexicographic** order (`ls | sort`). This tree reflects the **current** repository layout, including LLM tools, RAG, infra, and 3D/report visualization.
 
 ```
-aion/                          # Top-level entries in lexicographic order (same as ls | sort)
-├── __init__.py
-├── _core.py                   # fast_* bridge → aion._aion_core or NumPy fallback
+aion/
+├── __init__.py                # Version, metadata, public submodule exports
+├── _core.py                   # fast_* → optional aion._aion_core or NumPy
 ├── algorithms/
 │   ├── README.md
 │   ├── __init__.py
@@ -105,10 +212,16 @@ aion/                          # Top-level entries in lexicographic order (same 
 │   │   ├── 01_search_algorithms.ipynb
 │   │   ├── 02_array_utilities.ipynb
 │   │   └── README.md
-│   ├── graphs.py
+│   ├── graphs.py              # bfs, dfs, toposort, dijkstra, connected_components, …
 │   └── search.py
+├── benchmarks/
+│   └── __init__.py            # timed_run, compare_sum_numpy_vs_fast
 ├── cli.py
 ├── code.py
+├── config/
+│   └── __init__.py            # TOML/YAML, env merge (optional tomli on Python 3.8–3.10)
+├── dataframe/
+│   └── __init__.py            # Optional pandas helpers ([ai])
 ├── datasets/
 │   ├── __init__.py
 │   ├── batch.py
@@ -117,9 +230,11 @@ aion/                          # Top-level entries in lexicographic order (same 
 │   ├── schema.py
 │   └── text.py
 ├── embed.py
+├── env/
+│   └── __init__.py            # load_dotenv_file, require_env
 ├── evaluate.py
 ├── files.py
-├── former/                    # Sub-entries in lexicographic order (ls | sort)
+├── former/
 │   ├── README.md
 │   ├── __init__.py
 │   ├── core/
@@ -155,7 +270,7 @@ aion/                          # Top-level entries in lexicographic order (same 
 │   │   └── transformer.py
 │   ├── training/
 │   │   ├── __init__.py
-│   │   ├── checkpoint.py
+│   │   ├── checkpoint.py    # weights npz + save_checkpoint_sidecar_meta
 │   │   ├── loss.py
 │   │   ├── optimizer.py
 │   │   └── trainer.py
@@ -170,7 +285,13 @@ aion/                          # Top-level entries in lexicographic order (same 
 │   ├── atomic.py
 │   ├── checksum.py
 │   └── streaming.py
+├── logging_utils/
+│   └── __init__.py            # setup_logging, LOG_LEVEL
 ├── maths.py
+├── metrics/
+│   └── __init__.py            # Brier, reliability bins; optional sklearn ([metrics])
+├── packaging/
+│   └── __init__.py            # read_version_from_init
 ├── parser.py
 ├── pdf.py
 ├── prompt.py
@@ -183,30 +304,42 @@ aion/                          # Top-level entries in lexicographic order (same 
 │   ├── gemini_provider.py
 │   ├── generic_openai.py
 │   ├── http_utils.py
-│   └── openai_provider.py
+│   ├── openai_provider.py
+│   └── structured.py          # AssistantTurn, NormalizedToolCall, parse_chat_completion_response
+├── rag/
+│   ├── __init__.py
+│   ├── chunking.py
+│   ├── pipeline.py            # SimpleRAGIndex
+│   ├── types.py               # VectorStore, ScoredChunk
+│   └── stores/
+│       ├── __init__.py
+│       ├── faiss_store.py
+│       └── memory.py
+├── serialization/
+│   └── __init__.py            # JSON-safe helpers, checkpoint_meta
 ├── snippets.py
+├── testing/
+│   └── __init__.py            # FakeToolProvider, make_tool_turn
 ├── text.py
+├── tools/
+│   ├── __init__.py
+│   ├── loop.py                # run_tool_loop
+│   ├── rate_limit.py
+│   ├── registry.py
+│   ├── retry.py
+│   ├── schemas.py
+│   └── tokens.py
 ├── utils.py
 ├── visualization/
 │   ├── README.md
 │   ├── __init__.py
 │   ├── arrays.py
 │   ├── classification.py
-│   ├── examples/
-│   │   ├── 01_array_visualization.ipynb
-│   │   ├── 02_matrix_visualization.ipynb
-│   │   ├── 03_training_visualization.ipynb
-│   │   └── README.md
-│   ├── examples_visualization/
-│   │   ├── example_array.png
-│   │   ├── example_array_mean.png
-│   │   ├── example_confusion_matrix.png
-│   │   ├── example_histogram.png
-│   │   ├── example_matrix_heatmap.png
-│   │   ├── example_multiple_arrays.png
-│   │   ├── example_scatter.png
-│   │   └── example_training_history.png
+│   ├── examples/              # Jupyter notebooks
+│   ├── examples_visualization/  # Example PNG previews
 │   ├── matrices.py
+│   ├── report.py              # save_figures_pdf, figures_to_html_img_tags
+│   ├── three_d.py             # plot_3d_scatter, plot_3d_surface
 │   ├── training.py
 │   └── utils.py
 └── watcher.py
@@ -216,9 +349,30 @@ After a local build, you may also see **`aion/_aion_core*.so`** (macOS/Linux) or
 
 ### Design principles
 
-- **Explicit imports:** Subpackages re-export their main symbols in `__init__.py`; you can use `from aion.algorithms import binary_search` or `from aion.algorithms.search import binary_search`.
-- **Backend-safe visualization:** Plot functions return matplotlib Figures and accept `show=False`; in headless environments they do not require a display.
-- **Layered dependencies:** Core and algorithms depend mainly on NumPy and the standard library; `datasets` and `io` are stdlib-oriented; `providers` may pull vendor HTTP/SDK usage at runtime; embed, pdf, and visualization add optional dependencies when used.
+- **Explicit imports:** Subpackages re-export stable symbols from `__init__.py` (e.g. `from aion.algorithms import binary_search` or `from aion.algorithms.search import binary_search`).
+- **Backend-safe visualization:** Plotting APIs return matplotlib `Figure` objects and support `show=False` for servers and CI; 3D uses `mpl_toolkits.mplot3d` (still `[viz]` / matplotlib).
+- **Layered dependencies:** Core + algorithms target NumPy and the standard library where possible. `datasets` / `io` avoid heavy deps. `providers`, `tools`, and `rag` may require network keys or optional FAISS / sentence-transformers. Never install `[full]` unless you need the whole research stack.
+- **Safety:** Tool execution uses **JSON object** arguments mapped to registered callables—no arbitrary code execution from model output.
+
+---
+
+## Optional dependency matrix
+
+| Extra | Purpose | Notable dependencies |
+|-------|---------|----------------------|
+| *(base)* | Core library | `numpy`, `watchdog`, `gitpython` |
+| `[viz]` | Plots (1D/2D/3D, reports) | `matplotlib`, `seaborn` |
+| `[former]` | Aion Former training | `matplotlib`, `pyyaml` |
+| `[ai]` | ML / transformers / pandas | `torch`, `transformers`, `pandas`, `scikit-learn`, … |
+| `[docs]` | PDF generation | `reportlab`, `pillow` |
+| `[dev]` | Tests and formatters | `pytest`, `black`, `flake8` |
+| `[tools]` | Token counting for prompts | `tiktoken` |
+| `[rag]` | Embeddings + FAISS index | `sentence-transformers`, `faiss-cpu` |
+| `[config]` | TOML on older Python + YAML | `tomli` (3.8–3.10), `pyyaml` |
+| `[metrics]` | Extra sklearn report helper | `scikit-learn` |
+| `[full]` | Convenience “everything” set | Combines most stacks above (+ OpenAI client, tiktoken, etc.) |
+
+Combine extras as needed, e.g. `pip install "aqwel-aion[viz,tools]"` or editable `pip install -e ".[dev,full]"` from a clone.
 
 ---
 
@@ -253,6 +407,10 @@ pip install aqwel-aion[ai]     # ML stack: scipy, scikit-learn, pandas, matplotl
 pip install aqwel-aion[docs]   # PDF/docs: reportlab, pillow
 pip install aqwel-aion[full]   # All optional dependencies including seaborn, faiss-cpu
 pip install aqwel-aion[dev]    # Development: pytest, black, flake8
+pip install aqwel-aion[tools]  # tiktoken for token estimates
+pip install aqwel-aion[rag]    # sentence-transformers + faiss-cpu
+pip install aqwel-aion[config] # tomli on Python 3.8–3.10 + PyYAML
+pip install aqwel-aion[metrics] # scikit-learn helpers
 ```
 
 ### Editable install (for development)
@@ -381,8 +539,15 @@ The repository includes an `example.py` in the project root that demonstrates vi
 - **File management:** Create, move, copy, delete; directory listing and organization helpers.
 - **Datasets (`aion.datasets`):** `load_text`, `iter_text_lines`, `load_csv`, `iter_csv_rows`, `load_jsonl`, `iter_jsonl`, `batch_processor`, `validate_schema` for lightweight ETL and ML prep.
 - **Safe I/O (`aion.io`):** `iter_lines`, `read_chunks`, atomic writes, SHA-256 `file_sha256` / `verify_sha256` for reproducible pipelines.
-- **LLM providers (`aion.providers`):** `OpenAIProvider`, `GeminiProvider`, `AnthropicProvider`, `OpenAICompatibleProvider`, plus `create_provider` and `supported_providers` for unified chat completion workflows.
+- **LLM providers (`aion.providers`):** `OpenAIProvider`, `GeminiProvider`, `AnthropicProvider`, `OpenAICompatibleProvider`, `create_provider`, `supported_providers`. OpenAI-shaped APIs also expose **`complete_turn`** → `AssistantTurn` with optional **`tool_calls`**; see `aion.providers.structured`.
+- **Tool calling (`aion.tools`, extra `[tools]` for tiktoken):** `function_tool`, `ToolRegistry`, `run_tool_loop`, `post_json_with_retry`, `TokenBucket`, token estimation helpers.
+- **RAG (`aion.rag`, extra `[rag]`):** `chunk_text`, `MemoryVectorStore`, `FaissVectorStore`, `SimpleRAGIndex` over `aion.embed`.
+- **Config & runtime:** `aion.config` (TOML/YAML + env merge), `aion.env` (`.env` parsing), `aion.logging_utils` (`setup_logging`).
+- **Benchmarks & serialization:** `aion.benchmarks`, `aion.serialization` (JSON-safe experiment files, `checkpoint_meta`).
+- **Optional analytics:** `aion.metrics`, `aion.dataframe` (behind `[ai]` / `[metrics]`).
+- **Maintainers & tests:** `aion.packaging`, `aion.testing` (`FakeToolProvider`, etc.).
 - **Fast numerics (`aion` / `_core`):** Exported `fast_*` helpers and `using_native_extension` when the C++ extension is built.
+- **Visualization extras:** `plot_3d_scatter`, `plot_3d_surface`, `save_figures_pdf`, `figures_to_html_img_tags` in `aion.visualization` (matplotlib; `[viz]`).
 - **Code parser:** Language detection and detailed analysis for 30+ programming languages (see [Supported Languages](#supported-languages)).
 - **Real-time monitoring:** File change detection and callbacks via the watcher module.
 - **Git integration:** Status, commit history, branches, diffs, file history (optional dependency: GitPython).
@@ -590,6 +755,21 @@ fig = plot_training_history(history, show=False)
 save_plot(fig, "example_training_history.png")
 ```
 
+### 3D plots and figure reports (requires matplotlib, `[viz]`)
+
+```python
+import numpy as np
+from aion.visualization import plot_3d_scatter, plot_3d_surface, save_figures_pdf
+
+fig1 = plot_3d_scatter([0, 1, 2], [0, 1, 0], [0, 0, 1], title="Embedding preview", show=False)
+x = np.linspace(-2, 2, 30)
+y = np.linspace(-2, 2, 40)
+X, Y = np.meshgrid(x, y)
+Z = np.sin(X) + 0.1 * Y
+fig2 = plot_3d_surface(x, y, Z, title="Loss landscape (example)", show=False)
+save_figures_pdf([fig1, fig2], "report_figures.pdf")
+```
+
 ### Model evaluation
 
 ```python
@@ -677,6 +857,42 @@ status = manager.status()
 commits = manager.get_commit_history(limit=10)
 ```
 
+### LLM tool loop (OpenAI or OpenAI-compatible, API keys required)
+
+```python
+from aion.providers import OpenAIProvider
+from aion.tools import ToolRegistry, function_tool, run_tool_loop
+
+registry = ToolRegistry()
+registry.register("double", lambda n: n * 2, required_arg_keys=["n"])
+tools = [
+    function_tool(
+        "double",
+        "Return twice n",
+        properties={"n": {"type": "number", "description": "input"}},
+        required=["n"],
+    )
+]
+provider = OpenAIProvider()
+messages = [{"role": "user", "content": "Call double with n=21 once, then reply with the number only."}]
+text, history = run_tool_loop(provider, messages, tools, registry, max_rounds=6)
+```
+
+### RAG-style index (in-memory store; use `[rag]` for FAISS + sentence-transformers)
+
+```python
+import numpy as np
+from aion.rag import MemoryVectorStore, SimpleRAGIndex
+
+store = MemoryVectorStore()
+index = SimpleRAGIndex(
+    store=store,
+    embed_fn=lambda s: np.array([float(len(s)), float(s.count("a"))]),  # toy 2-D embedding
+)
+index.index_texts(["alpha research", "beta notes"], chunk_size=32, overlap=8)
+hits = index.query("alpha", k=2)
+```
+
 ### Aion Former — transformer training (optional: pip install aqwel-aion[former])
 
 ```python
@@ -712,10 +928,10 @@ Run from command line: `python -m aion.former.experiments.train_small_model`, `p
 | `aion.maths` | Mathematics, statistics, linear algebra, ML helpers, signal processing. |
 | `aion.datasets` | Text, CSV, JSONL loaders and iterators; batching; schema validation for dict-like records. |
 | `aion.io` | Streaming reads, atomic writes, SHA-256 checksum helpers. |
-| `aion.providers` | Chat completion clients (OpenAI, Gemini, Anthropic, OpenAI-compatible); factory and error types. |
+| `aion.providers` | Chat clients + `create_provider`; `complete` and **`complete_turn`** (OpenAI / OpenAI-compatible); `AssistantTurn` / `NormalizedToolCall` in `structured`. |
 | `aion` (`fast_*`, `using_native_extension`) | Optional C++-accelerated numerics via `_core`; NumPy when the extension is not built. |
-| `aion.algorithms` | Search (binary, bounds, jump, exponential, etc.) and array utilities (flatten, chunk, window, dedupe, rolling sum, pad). |
-| `aion.visualization` | 1D/2D and training plots; heatmaps, confusion matrices, attention maps; save_plot utility. |
+| `aion.algorithms` | Search, array utilities, **graphs** (BFS, DFS, toposort, Dijkstra, connected components, unweighted shortest path). |
+| `aion.visualization` | 1D/2D/training plots; heatmaps, confusion matrices, attention maps; **3D** plots; multi-page **PDF** / HTML figure reports; `save_plot` utility. |
 | `aion.former` | Transformer training: Transformer, Trainer, TextDataset, tokenizer, attention/training/weight-spectrum plots. Install with `[former]`. |
 | `aion.embed` | Text embeddings and vector similarity (optional: sentence-transformers). |
 | `aion.evaluate` | Classification and regression metrics; file-based evaluation. |
@@ -730,6 +946,17 @@ Run from command line: `python -m aion.former.experiments.train_small_model`, `p
 | `aion.utils` | General utilities. |
 | `aion.text` | Text processing. |
 | `aion.cli` | Command-line interface. |
+| `aion.tools` | LLM tool schemas, registry, `run_tool_loop`, retry/rate-limit helpers, token estimates (`[tools]`). |
+| `aion.rag` | Chunking, vector stores, `SimpleRAGIndex` (`[rag]` / FAISS optional). |
+| `aion.config` | TOML/YAML load + env merge (`[config]`). |
+| `aion.env` | `.env` file parsing, `require_env`. |
+| `aion.logging_utils` | Root logging setup from `LOG_LEVEL`. |
+| `aion.benchmarks` | `timed_run`, NumPy vs `fast_sum` comparison. |
+| `aion.serialization` | JSON-safe read/write, `checkpoint_meta`. |
+| `aion.metrics` | Brier score, reliability bins; optional sklearn report (`[metrics]` / `[ai]`). |
+| `aion.dataframe` | Optional pandas column checks and train/val split (`[ai]`). |
+| `aion.packaging` | `read_version_from_init` for maintainers. |
+| `aion.testing` | `FakeToolProvider` and helpers for pytest. |
 
 Package entry point and version:
 
@@ -757,6 +984,7 @@ See `aion.parser` and `aion.code` for language-specific behavior and APIs.
 - **Official site:** [https://aqwelai.xyz/](https://aqwelai.xyz/)
 - **PyPI:** [https://pypi.org/project/aqwel-aion/](https://pypi.org/project/aqwel-aion/)
 - **Package metadata and URLs:** See [pyproject.toml](pyproject.toml) for project links and optional dependencies.
+- **This README:** Architecture **Mermaid diagrams**, full `aion/` **source tree**, and an **optional extras matrix** for onboarding.
 - **In-package docs:** Use `aion.pdf.generate_complete_documentation(output_dir)` to generate API and user-guide artifacts. Algorithm and visualization API details are in `aion/algorithms/README.md` and `aion/visualization/README.md`.
 - **Example notebooks:**
   - Algorithms: `aion/algorithms/examples/` (search, array utilities).
@@ -819,7 +1047,7 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Library Statistics
 
-- **18+ top-level modules and subpackages** (including `datasets`, `io`, `providers`, plus maths, algorithms, visualization, former, embed, evaluate, code, prompt, snippets, pdf, parser, files, watcher, git, utils, text, cli, and optional `fast_*` exports).
+- **30+ distinct subpackages and top-level modules** under `aion/` (core maths/code/embed/…, `datasets`, `io`, `providers`, `tools`, `rag`, `config`, `env`, `logging_utils`, `benchmarks`, `serialization`, `metrics`, `dataframe`, `packaging`, `testing`, `algorithms`, `visualization` with 3D/report helpers, `former`, optional `fast_*`).
 - **71+ mathematical functions** in the maths module.
 - **Aion Former:** Decoder-only transformer training with NumPy autograd, multi-head attention, and visualization (optional `[former]` extra).
 - **Full research pipeline** from data and algorithms through visualization and documentation.
@@ -827,4 +1055,4 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ---
 
-Aion is designed so researchers and developers can reuse common operations without reimplementing them, from numerical and algorithmic foundations through to publication-ready documentation and plots.
+Aion is built so teams can move from **numeric and algorithmic baselines** to **LLM-assisted workflows**, **retrieval**, and **publication-ready figures**—with a single, versioned library and clear optional extras.

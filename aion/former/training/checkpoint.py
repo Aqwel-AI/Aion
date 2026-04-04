@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 if TYPE_CHECKING:
     from ..models.transformer import Transformer
@@ -53,3 +53,21 @@ def load_transformer_weights(model: Transformer, path: str) -> None:
                     f"Shape mismatch for {key}: checkpoint {arr.shape} vs model {p._data.shape}"
                 )
             p._data[...] = arr
+
+
+def save_checkpoint_sidecar_meta(
+    checkpoint_path: str,
+    *,
+    epoch: int,
+    model_type: str = "Transformer",
+    extra: Optional[Dict[str, object]] = None,
+) -> str:
+    """
+    Write ``checkpoint_meta`` JSON next to a ``.npz`` weights file
+    (``path + '.meta.json'``) for experiment tracking.
+    """
+    from ...serialization import checkpoint_meta, write_json
+
+    sidecar = str(checkpoint_path) + ".meta.json"
+    write_json(sidecar, checkpoint_meta(epoch=epoch, model_type=model_type, extra=extra))
+    return sidecar

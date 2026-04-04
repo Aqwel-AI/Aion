@@ -52,6 +52,27 @@ from . import io
 # Remote LLM APIs (OpenAI, Gemini, Anthropic, OpenAI-compatible servers)
 from . import providers
 
+# Tool-calling helpers and RAG primitives
+from . import tools
+from . import rag
+
+# Config, environment, logging helpers
+from . import config
+from . import env
+from . import logging_utils
+
+# Timing / benchmarks and safe serialization
+from . import benchmarks
+from . import serialization
+
+# Optional ML metrics and pandas helpers (heavy imports deferred inside functions)
+from . import metrics
+from . import dataframe
+
+# Maintainer and test utilities
+from . import packaging
+from . import testing
+
 # Import the code parsing module for language detection and code analysis
 from . import parser
 
@@ -111,6 +132,17 @@ __all__ = [
     "datasets",         # Text / CSV / JSONL loaders
     "io",               # Streaming, atomic writes, checksums
     "providers",        # OpenAI / Gemini / Anthropic / compatible APIs
+    "tools",            # LLM tool schemas, registry, loop, retry, tokens
+    "rag",              # Chunking, vector stores, simple RAG index
+    "config",           # TOML/YAML config loading
+    "env",              # Dotenv-style and required env vars
+    "logging_utils",    # logging setup helpers
+    "benchmarks",       # Timing and fast_* comparison helpers
+    "serialization",    # JSON-safe experiment serialization
+    "metrics",          # Optional sklearn metrics helpers
+    "dataframe",        # Optional pandas helpers
+    "packaging",        # Version/readme helpers for maintainers
+    "testing",          # Pytest-oriented helpers
     "parser",           # Code parsing module
     "watcher",          # File watching module
     "utils",            # Utilities module

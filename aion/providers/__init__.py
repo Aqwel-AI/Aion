@@ -25,14 +25,18 @@ from .factory import create_provider, supported_providers
 from .gemini_provider import GeminiProvider
 from .generic_openai import OpenAICompatibleProvider
 from .openai_provider import OpenAIProvider
+from .structured import AssistantTurn, NormalizedToolCall, parse_chat_completion_response
 
 __all__ = [
     "AnthropicProvider",
+    "AssistantTurn",
     "ChatMessage",
     "ChatProvider",
     "GeminiProvider",
     "OpenAIProvider",
+    "NormalizedToolCall",
     "OpenAICompatibleProvider",
+    "parse_chat_completion_response",
     "ProviderError",
     "create_provider",
     "supported_providers",

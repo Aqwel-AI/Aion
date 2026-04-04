@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 from .base import ChatMessage
+from .structured import AssistantTurn
 from .http_utils import post_json
 
 
@@ -34,6 +35,22 @@ class GeminiProvider:
             )
         self._api_key = key
         self._model = model.lstrip("models/")
+
+    def complete_turn(
+        self,
+        messages: Sequence[Union[ChatMessage, Mapping[str, Any]]],
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+        tools: Any = None,
+        tool_choice: Any = None,
+        **kwargs: Any,
+    ) -> AssistantTurn:
+        raise NotImplementedError(
+            "GeminiProvider.complete_turn is not implemented: Gemini generateContent "
+            "uses a different schema than OpenAI chat/completions. "
+            "Use OpenAIProvider or OpenAICompatibleProvider with aion.tools for tool loops in v1."
+        )
 
     def complete(
         self,

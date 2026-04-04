@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 from .base import ChatMessage
 from .http_utils import post_json
+from .structured import AssistantTurn, parse_chat_completion_response
+
+MessageInput = Union[ChatMessage, Mapping[str, Any]]
 
 
 class OpenAIProvider:
@@ -36,6 +39,47 @@ class OpenAIProvider:
         self._api_key = key
         self._model = model
         self._base = base_url.rstrip("/")
+
+    @staticmethod
+    def _messages_to_api(messages: Sequence[MessageInput]) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        for m in messages:
+            out.append(dict(m))
+        return out
+
+    def complete_turn(
+        self,
+        messages: Sequence[MessageInput],
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: Any = None,
+        **kwargs: Any,
+    ) -> AssistantTurn:
+        """
+        Chat completion with optional ``tools`` / ``tool_choice`` (OpenAI format).
+
+        Returns parsed ``content`` and/or ``tool_calls``. Use with ``aion.tools``
+        for multi-step tool loops.
+        """
+        url = f"{self._base}/chat/completions"
+        payload: dict = {
+            "model": self._model,
+            "messages": self._messages_to_api(messages),
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if tools is not None:
+            payload["tools"] = tools
+        if tool_choice is not None:
+            payload["tool_choice"] = tool_choice
+        for k, v in kwargs.items():
+            if k not in payload:
+                payload[k] = v
+        headers = {"Authorization": f"Bearer {self._api_key}"}
+        data = post_json(url, payload, headers=headers)
+        return parse_chat_completion_response(data)
 
     def complete(
         self,

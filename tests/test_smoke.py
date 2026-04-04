@@ -112,3 +112,131 @@ def test_trainer_causal_mask_shape():
     y = np.zeros((2, 8), dtype=np.int64)
     loss = tr.train_step(x, y)
     assert isinstance(loss, float)
+
+
+def test_parse_chat_completion_tool_calls():
+    from aion.providers.structured import parse_chat_completion_response
+
+    data = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_1",
+                            "type": "function",
+                            "function": {"name": "add", "arguments": '{"a":1,"b":2}'},
+                        }
+                    ],
+                }
+            }
+        ]
+    }
+    turn = parse_chat_completion_response(data)
+    assert turn.content is None
+    assert len(turn.tool_calls) == 1
+    assert turn.tool_calls[0].name == "add"
+
+
+def test_tool_registry_and_loop():
+    from aion.tools import ToolRegistry, function_tool, run_tool_loop
+    from aion.testing import FakeToolProvider, make_tool_turn
+    from aion.providers.structured import NormalizedToolCall
+
+    reg = ToolRegistry()
+    reg.register("add", lambda a, b: a + b, required_arg_keys=["a", "b"])
+    tools = [
+        function_tool(
+            "add",
+            "add numbers",
+            properties={
+                "a": {"type": "number"},
+                "b": {"type": "number"},
+            },
+            required=["a", "b"],
+        )
+    ]
+    turns = [
+        make_tool_turn(
+            [NormalizedToolCall(id="c1", name="add", arguments_json='{"a":1,"b":2}')],
+            content=None,
+        ),
+        make_tool_turn([], content="done"),
+    ]
+    prov = FakeToolProvider(turns)
+    msgs = [{"role": "user", "content": "use add"}]
+    text, out = run_tool_loop(prov, msgs, tools, reg, max_rounds=5)
+    assert text == "done"
+    assert any(m.get("role") == "tool" for m in out)
+
+
+def test_rag_chunk_and_memory_store():
+    import numpy as np
+
+    from aion.rag import MemoryVectorStore, SimpleRAGIndex, chunk_text
+
+    assert chunk_text("abcd", 2, 1) == ["ab", "bc", "cd"]
+    store = MemoryVectorStore()
+    store.add(
+        ids=["a", "b"],
+        vectors=np.array([[1.0, 0.0], [0.0, 1.0]]),
+        metadatas=[{"t": "x"}, {"t": "y"}],
+    )
+    hits = store.search(np.array([1.0, 0.0]), k=1)
+    assert hits[0].id == "a"
+
+    idx = SimpleRAGIndex(store=store, embed_fn=lambda s: np.array([1.0, 0.0] if "a" in s else [0.0, 1.0]))
+    idx.index_texts(["hello a", "bye b"], chunk_size=10, overlap=0)
+    q = idx.query("a", k=1)
+    assert len(q) >= 1
+
+
+def test_graph_dijkstra_and_components():
+    from aion.algorithms import connected_components, dijkstra, shortest_path_unweighted
+
+    g = {"A": [("B", 1.0), ("C", 4.0)], "B": [("C", 2.0)], "C": []}
+    d = dijkstra(g, "A")
+    assert abs(d["C"] - 3.0) < 1e-9
+
+    ug = {"A": ["B"], "B": ["A", "C"], "C": ["B"]}
+    comps = connected_components(ug)
+    assert len(comps) == 1
+
+    dg = {"A": ["B", "C"], "B": ["C"], "C": []}
+    p = shortest_path_unweighted(dg, "A", "C")
+    assert p == ["A", "C"] or p == ["A", "B", "C"]
+
+
+def test_serialization_roundtrip(tmp_path: Path):
+    from aion.serialization import read_json, write_json
+
+    p = tmp_path / "x.json"
+    write_json(p, {"x": 1, "s": "a"})
+    assert read_json(p) == {"x": 1, "s": "a"}
+
+
+def test_metrics_brier():
+    from aion.metrics import brier_score_binary
+
+    assert abs(brier_score_binary([0, 1], [0.1, 0.9]) - 0.01) < 1e-9
+
+
+def test_packaging_read_version():
+    from aion.packaging import read_version_from_init
+
+    v = read_version_from_init()
+    assert v == "0.1.9"
+
+
+def test_env_dotenv(tmp_path: Path, monkeypatch):
+    import os
+
+    from aion.env import load_dotenv_file
+
+    p = tmp_path / ".env"
+    p.write_text('AION_TEST_DOTENV_KEY=fromfile\n', encoding="utf-8")
+    monkeypatch.delenv("AION_TEST_DOTENV_KEY", raising=False)
+    load_dotenv_file(p, override=False)
+    assert os.environ.get("AION_TEST_DOTENV_KEY") == "fromfile"

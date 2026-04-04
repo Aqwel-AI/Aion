@@ -9,12 +9,17 @@ prediction with optional padding mask.
 from .trainer import Trainer
 from .optimizer import Adam
 from .loss import cross_entropy_loss
-from .checkpoint import load_transformer_weights, save_transformer_weights
+from .checkpoint import (
+    load_transformer_weights,
+    save_checkpoint_sidecar_meta,
+    save_transformer_weights,
+)
 
 __all__ = [
     "Trainer",
     "Adam",
     "cross_entropy_loss",
     "load_transformer_weights",
+    "save_checkpoint_sidecar_meta",
     "save_transformer_weights",
 ]

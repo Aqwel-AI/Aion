@@ -146,6 +146,21 @@ setup(
             "flake8>=3.8",
         ],
 
+        "tools": [
+            "tiktoken>=0.5.0",
+        ],
+        "rag": [
+            "sentence-transformers>=2.2.0",
+            "faiss-cpu>=1.7.0",
+        ],
+        "config": [
+            "tomli>=2.0.0; python_version<'3.11'",
+            "pyyaml>=6.0",
+        ],
+        "metrics": [
+            "scikit-learn>=1.0.0",
+        ],
+
         # Full installation (all features)
         "full": [
             "scipy>=1.7.0",
@@ -160,6 +175,9 @@ setup(
             "sentence-transformers>=2.2.0",
             "reportlab>=3.6.0",
             "pillow>=8.0.0",
+            "tiktoken>=0.5.0",
+            "tomli>=2.0.0; python_version<'3.11'",
+            "pyyaml>=6.0",
         ],
     },
 

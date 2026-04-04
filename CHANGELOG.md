@@ -5,6 +5,19 @@ All notable changes to the Aqwel-Aion project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2026-03-29
+
+### Added
+- **`aion.tools`** — OpenAI-style tool schemas, `ToolRegistry`, `run_tool_loop`, HTTP retry helper, token bucket, optional `tiktoken` estimates (`pip install aqwel-aion[tools]`).
+- **`aion.rag`** — Text chunking, `MemoryVectorStore`, optional `FaissVectorStore`, `SimpleRAGIndex` pipeline (`[rag]` extra).
+- **Providers** — `complete_turn` / `AssistantTurn` / `NormalizedToolCall` for OpenAI and OpenAI-compatible APIs; `complete_turn` stubs on Anthropic/Gemini with clear `NotImplementedError`.
+- **`aion.config`**, **`aion.env`**, **`aion.logging_utils`** — TOML/YAML config merge with env overrides, `.env` parsing, logging setup.
+- **`aion.benchmarks`**, **`aion.serialization`**, **`aion.metrics`**, **`aion.dataframe`**, **`aion.packaging`**, **`aion.testing`** — Timing helpers, JSON-safe serialization, Brier/reliability and optional sklearn report, optional pandas splits, version read helper, fake provider for tests.
+- **Graph algorithms** — `dijkstra`, `connected_components`, `shortest_path_unweighted` in `aion.algorithms.graphs`.
+- **Visualization** — `plot_3d_scatter`, `plot_3d_surface`, `save_figures_pdf`, `figures_to_html_img_tags`.
+- **Former** — `save_checkpoint_sidecar_meta` for JSON metadata next to `.npz` checkpoints.
+- **Optional extras** in `pyproject.toml` / `setup.py`: `[tools]`, `[rag]`, `[config]`, `[metrics]`; `[full]` extended with tiktoken, tomli (Python 3.8–3.10), PyYAML.
+
 ## [0.1.8] - 2025-02-22
 
 ### Changed
