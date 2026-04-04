@@ -487,3 +487,8 @@ Examples:
         git_parser.print_help()
     else:
         parser.print_help()
+
+
+
+def foo():
+    pass
