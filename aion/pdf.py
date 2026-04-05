@@ -24,7 +24,10 @@ Module contents
 - create_changelog_pdf / create_changelog_text: Changelog from structured data or
   Keep a Changelog-style Markdown.
 - create_module_dependency_doc: Report of inter-module imports (aion-only) in PDF or TXT.
-- export_api_index: Machine-readable index (JSON or CSV) of all public functions.
+- export_api_index: Machine-readable index (JSON, CSV, or Markdown) of public functions.
+- search_public_api: Find functions (and optionally classes) whose names contain a query string.
+- create_api_documentation_html: Full API reference as a static HTML page (no extra deps).
+- create_module_reference_doc: Markdown, text, or PDF reference for a single submodule.
 - export_function_list: Text listing of functions for a given module.
 - create_pdf_report: Simple PDF (or TXT fallback) from a title and list of paragraphs.
 - get_documentation_statistics: Return module/function counts and per-module stats.
@@ -50,6 +53,7 @@ Copyright: 2025 Aqwel AI
 
 import os
 import json
+import html
 import inspect
 import importlib
 import pkgutil
@@ -256,15 +260,22 @@ class PDFDocumentGenerator:
         return filename
 
 
-def generate_module_documentation(module_name: str) -> List[Dict[str, Any]]:
+def generate_module_documentation(
+    module_name: str,
+    include_classes: bool = False,
+) -> List[Dict[str, Any]]:
     """
     Introspect a single aion submodule and return a structure with its docstring
     and all public function names, signatures, docstrings, and source file paths.
     Args:
         module_name: Either "name" (resolved as aion.name) or "aion.name".
+        include_classes: When True, the module dict also has a ``classes`` list of
+            public classes defined in that module (name, signature, docstring,
+            source_file, and public methods with signatures).
     Returns:
-        A one-element list containing a dict with keys: type, name, doc, functions.
-        On import error, the single element has type "error" and key "error" with the message.
+        A one-element list containing a dict with keys: type, name, doc, functions
+        (and optionally classes). On import error, the single element has type
+        "error" and key "error" with the message.
     """
     try:
         if module_name.startswith("aion."):
@@ -273,26 +284,78 @@ def generate_module_documentation(module_name: str) -> List[Dict[str, Any]]:
             module = importlib.import_module(f"aion.{module_name}")
         docs = []
         module_doc = inspect.getdoc(module) or f"Documentation for {module_name} module"
-        docs.append({
-            'type': 'module',
-            'name': module_name,
-            'doc': module_doc,
-            "functions": []
-        })
+        entry: Dict[str, Any] = {
+            "type": "module",
+            "name": module_name,
+            "doc": module_doc,
+            "functions": [],
+        }
+        if include_classes:
+            entry["classes"] = []
+        docs.append(entry)
+
         for name, obj in inspect.getmembers(module, inspect.isfunction):
             if not name.startswith("_"):
+                try:
+                    src = inspect.getfile(obj)
+                except (TypeError, OSError):
+                    src = "Unknown"
                 func_doc = {
                     "name": name,
                     "signature": str(inspect.signature(obj)),
                     "docstring": inspect.getdoc(obj) or "No documentation available",
-                    "source_file": inspect.getfile(obj) if hasattr(obj, "__file__") else "Unknown",
+                    "source_file": src,
                 }
                 docs[0]["functions"].append(func_doc)
-        
+
+        if include_classes:
+            mod_name = getattr(module, "__name__", "")
+            for name, obj in inspect.getmembers(module, inspect.isclass):
+                if name.startswith("_"):
+                    continue
+                if getattr(obj, "__module__", None) != mod_name:
+                    continue
+                try:
+                    sig = str(inspect.signature(obj))
+                except (ValueError, TypeError):
+                    sig = "(...)"
+                try:
+                    src = inspect.getfile(obj)
+                except (TypeError, OSError):
+                    src = "Unknown"
+                methods: List[Dict[str, str]] = []
+                for mname, member in inspect.getmembers(obj, inspect.isfunction):
+                    if mname.startswith("_"):
+                        continue
+                    try:
+                        msig = str(inspect.signature(member))
+                    except (ValueError, TypeError):
+                        msig = "()"
+                    methods.append({
+                        "name": mname,
+                        "signature": msig,
+                        "docstring": inspect.getdoc(member) or "No documentation available",
+                    })
+                docs[0]["classes"].append({
+                    "name": name,
+                    "signature": sig,
+                    "docstring": inspect.getdoc(obj) or "No documentation available",
+                    "source_file": src,
+                    "methods": methods,
+                })
+
         return docs
-        
+
     except Exception as e:
-        return [{"type": "error", "name": module_name, "error": str(e), "functions": []}]
+        err: Dict[str, Any] = {
+            "type": "error",
+            "name": module_name,
+            "error": str(e),
+            "functions": [],
+        }
+        if include_classes:
+            err["classes"] = []
+        return [err]
 
 
 def create_api_documentation(output_file: str = "aion_api_documentation.pdf") -> str:
@@ -442,6 +505,211 @@ def create_api_documentation_md(output_file: str = "aion_api_documentation.md") 
     return output_file
 
 
+def create_api_documentation_html(output_file: str = "aion_api_documentation.html") -> str:
+    """
+    Write a self-contained HTML API reference for all documentable modules.
+    Escapes text for safe display; does not require ReportLab or any extra packages.
+    """
+    modules = get_documentable_modules()
+    parts = [
+        "<!DOCTYPE html>",
+        '<html lang="en">',
+        "<head>",
+        '<meta charset="utf-8"/>',
+        "<title>Aion API Documentation</title>",
+        "<style>",
+        "body{font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;max-width:52rem;margin:2rem auto;line-height:1.45;}",
+        "h1,h2,h3{color:#1a1a2e;}",
+        "code,pre{background:#f4f4f6;padding:0.15em 0.35em;border-radius:4px;font-size:0.92em;}",
+        "pre{padding:1rem;overflow:auto;}",
+        "nav ul{list-style:none;padding-left:0;}",
+        "nav li{margin:0.25rem 0;}",
+        ".sig{color:#6b1a1a;font-weight:600;}",
+        "</style>",
+        "</head>",
+        "<body>",
+        "<h1>Aion AI/ML Library &mdash; API Documentation</h1>",
+        f"<p><em>Generated {html.escape(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}</em></p>",
+        "<nav><h2>Contents</h2><ul>",
+    ]
+    for mod in modules:
+        aid = html.escape(mod.replace(".", "-").lower() + "-module")
+        parts.append(f'<li><a href="#{aid}">{html.escape(mod)}</a></li>')
+    parts.extend(["</ul></nav>", "<hr/>"])
+
+    for module_name in modules:
+        aid = html.escape(module_name.replace(".", "-").lower() + "-module")
+        parts.append(f'<section id="{aid}">')
+        parts.append(f"<h2>{html.escape(module_name)}</h2>")
+        module_docs = generate_module_documentation(module_name)
+        if module_docs and module_docs[0]["type"] != "error":
+            doc_data = module_docs[0]
+            parts.append("<h3>Description</h3>")
+            parts.append(f"<pre>{html.escape(doc_data['doc'])}</pre>")
+            if doc_data["functions"]:
+                parts.append("<h3>Functions</h3><ul>")
+                for func in doc_data["functions"]:
+                    sig = html.escape(f"{func['name']}{func['signature']}")
+                    ds = html.escape(func["docstring"])
+                    parts.append(f"<li><p class=\"sig\">{sig}</p><p>{ds}</p></li>")
+                parts.append("</ul>")
+        else:
+            err = module_docs[0].get("error", "Unknown error") if module_docs else "Unknown error"
+            parts.append(f"<p><em>Error: {html.escape(str(err))}</em></p>")
+        parts.append("</section><hr/>")
+
+    parts.extend(["</body>", "</html>"])
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write("\n".join(parts))
+    print(f"HTML API documentation generated: {output_file}")
+    return output_file
+
+
+def search_public_api(
+    query: str,
+    *,
+    case_sensitive: bool = False,
+    include_classes: bool = True,
+) -> List[Dict[str, str]]:
+    """
+    Search documentable modules for public functions (and optionally classes)
+    whose names contain ``query``. Returns sorted dicts with keys module, kind
+    (``function`` or ``class``), and name.
+    """
+    if not query:
+        return []
+    needle = query if case_sensitive else query.casefold()
+    results: List[Dict[str, str]] = []
+    for mod in get_documentable_modules():
+        docs = generate_module_documentation(mod, include_classes=include_classes)
+        if not docs or docs[0].get("type") == "error":
+            continue
+        for func in docs[0].get("functions", []):
+            n = func.get("name", "")
+            hay = n if case_sensitive else n.casefold()
+            if needle in hay:
+                results.append({"module": mod, "kind": "function", "name": n})
+        if include_classes:
+            for cls in docs[0].get("classes", []):
+                n = cls.get("name", "")
+                hay = n if case_sensitive else n.casefold()
+                if needle in hay:
+                    results.append({"module": mod, "kind": "class", "name": n})
+    return sorted(results, key=lambda x: (x["module"], x["kind"], x["name"]))
+
+
+def create_module_reference_doc(
+    module_name: str,
+    output_file: Optional[str] = None,
+    format: str = "md",
+    include_classes: bool = True,
+) -> str:
+    """
+    Write reference documentation for a single ``aion`` submodule as Markdown,
+    plain text, or PDF. Default output is ``{module}_reference.md`` (or .txt / .pdf).
+    PDF requires ReportLab; if unavailable, text is written instead.
+    """
+    docs = generate_module_documentation(module_name, include_classes=include_classes)
+    safe = module_name.replace(".", "_")
+    if output_file is None:
+        if format == "pdf" and _HAS_REPORTLAB:
+            output_file = f"{safe}_reference.pdf"
+        elif format == "txt":
+            output_file = f"{safe}_reference.txt"
+        else:
+            output_file = f"{safe}_reference.md"
+
+    if docs and docs[0].get("type") == "error":
+        err = docs[0].get("error", "Unknown error")
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(f"Error documenting {module_name}: {err}\n")
+        return output_file
+
+    doc_data = docs[0]
+
+    if format == "txt":
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(f"{module_name.upper()} MODULE REFERENCE\n")
+            f.write("=" * (len(module_name) + 20) + "\n\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write("DESCRIPTION\n-----------\n")
+            f.write(f"{doc_data['doc']}\n\n")
+            if doc_data.get("functions"):
+                f.write("FUNCTIONS\n---------\n\n")
+                for func in doc_data["functions"]:
+                    f.write(f"• {func['name']}{func['signature']}\n")
+                    f.write(f"  {func['docstring']}\n\n")
+            if include_classes and doc_data.get("classes"):
+                f.write("CLASSES\n-------\n\n")
+                for cls in doc_data["classes"]:
+                    f.write(f"• class {cls['name']}{cls['signature']}\n")
+                    f.write(f"  {cls['docstring']}\n")
+                    for m in cls.get("methods", []):
+                        f.write(f"    - {m['name']}{m['signature']}\n")
+                        f.write(f"      {m['docstring'].split(chr(10))[0]}\n")
+                    f.write("\n")
+        print(f"Module reference generated: {output_file}")
+        return output_file
+
+    if format == "pdf" and _HAS_REPORTLAB:
+        generator = PDFDocumentGenerator(
+            f"Aion — {module_name} reference",
+            "Aqwel AI Team",
+        )
+        content: List[Any] = []
+        content.append(Paragraph("Description", generator.styles["Heading2"]))
+        content.append(Paragraph(doc_data["doc"].replace("\n", "<br/>"), generator.styles["Normal"]))
+        content.append(Spacer(1, 12))
+        if doc_data.get("functions"):
+            content.append(Paragraph("Functions", generator.styles["Heading2"]))
+            for func in doc_data["functions"]:
+                content.append(Paragraph(f"{func['name']}{func['signature']}", generator.styles["FunctionSignature"]))
+                content.append(Paragraph(func["docstring"].replace("\n", "<br/>"), generator.styles["Normal"]))
+                content.append(Spacer(1, 8))
+        if include_classes and doc_data.get("classes"):
+            content.append(Paragraph("Classes", generator.styles["Heading2"]))
+            for cls in doc_data["classes"]:
+                content.append(Paragraph(f"class {cls['name']}{cls['signature']}", generator.styles["FunctionSignature"]))
+                content.append(Paragraph(cls["docstring"].replace("\n", "<br/>"), generator.styles["Normal"]))
+                for m in cls.get("methods", []):
+                    content.append(Paragraph(f"  {m['name']}{m['signature']}", generator.styles["FunctionSignature"]))
+                    first = (m.get("docstring") or "").split("\n")[0]
+                    content.append(Paragraph(first, generator.styles["Normal"]))
+                content.append(Spacer(1, 8))
+        generator.create_document(output_file, content)
+        print(f"Module reference generated: {output_file}")
+        return output_file
+
+    if format == "pdf" and not _HAS_REPORTLAB:
+        output_file = output_file.replace(".pdf", ".txt")
+        return create_module_reference_doc(module_name, output_file, "txt", include_classes=include_classes)
+
+    # Markdown (default)
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(f"# `{module_name}` module reference\n\n")
+        f.write(f"*Generated {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n")
+        f.write("## Description\n\n")
+        f.write(doc_data["doc"])
+        f.write("\n\n")
+        if doc_data.get("functions"):
+            f.write("## Functions\n\n")
+            for func in doc_data["functions"]:
+                f.write(f"### `{func['name']}{func['signature']}`\n\n")
+                f.write(f"{func['docstring']}\n\n")
+        if include_classes and doc_data.get("classes"):
+            f.write("## Classes\n\n")
+            for cls in doc_data["classes"]:
+                f.write(f"### `class {cls['name']}{cls['signature']}`\n\n")
+                f.write(f"{cls['docstring']}\n\n")
+                if cls.get("methods"):
+                    f.write("#### Methods\n\n")
+                    for m in cls["methods"]:
+                        f.write(f"- `{m['name']}{m['signature']}` — {(m.get('docstring') or '').split(chr(10))[0]}\n")
+                    f.write("\n")
+    print(f"Module reference generated: {output_file}")
+    return output_file
+
+
 def _get_aion_imports_from_source(filepath: str) -> List[str]:
     """
     Parse the Python source at filepath with ast and collect the top-level aion
@@ -545,17 +813,20 @@ def create_module_dependency_doc(
 def export_api_index(
     output_file: Optional[str] = None,
     format: str = "json",
+    include_classes: bool = False,
 ) -> str:
     """
-    Build a flat index of all public functions across documentable modules and
-    write it to a file. Each entry has module, function, signature, and
-    docstring_one_line (first sentence of the docstring). format must be
-    "json" or "csv"; default output filename is aion_api_index.json or .csv.
+    Build a flat index of public callables across documentable modules and write
+    it to a file. Each row has module, function (symbol name), signature, and
+    docstring_one_line. When ``include_classes`` is True, public classes defined
+    in each module are appended as rows with the same shape (signature is the
+    class constructor signature). format may be ``json``, ``csv``, or ``md``
+    (Markdown table). Default filenames: aion_api_index.json, .csv, or .md.
     """
     modules = get_documentable_modules()
-    rows = []
+    rows: List[Dict[str, str]] = []
     for mod in modules:
-        docs = generate_module_documentation(mod)
+        docs = generate_module_documentation(mod, include_classes=include_classes)
         if not docs or docs[0].get("type") == "error":
             continue
         for func in docs[0].get("functions", []):
@@ -568,13 +839,45 @@ def export_api_index(
                 "signature": func.get("signature", ""),
                 "docstring_one_line": one_line or "No description.",
             })
+        if include_classes:
+            for cls in docs[0].get("classes", []):
+                one_line = (cls.get("docstring") or "").split(".")[0].strip()
+                if one_line and not one_line.endswith("."):
+                    one_line += "."
+                rows.append({
+                    "module": mod,
+                    "function": cls.get("name", ""),
+                    "signature": cls.get("signature", ""),
+                    "docstring_one_line": one_line or "No description.",
+                })
     if output_file is None:
-        output_file = "aion_api_index.json" if format == "json" else "aion_api_index.csv"
+        if format == "csv":
+            output_file = "aion_api_index.csv"
+        elif format == "md":
+            output_file = "aion_api_index.md"
+        else:
+            output_file = "aion_api_index.json"
     if format == "csv":
         with open(output_file, "w", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, fieldnames=["module", "function", "signature", "docstring_one_line"])
             w.writeheader()
             w.writerows(rows)
+    elif format == "md":
+
+        def _md_cell(s: str) -> str:
+            t = (s or "").replace("|", "\\|").replace("\n", " ")
+            return t
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("# Aion API index\n\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write("| Module | Symbol | Signature | Summary |\n")
+            f.write("|--------|--------|-----------|--------|\n")
+            for r in rows:
+                f.write(
+                    f"| {_md_cell(r['module'])} | `{_md_cell(r['function'])}` "
+                    f"| `{_md_cell(r['signature'])}` | {_md_cell(r['docstring_one_line'])} |\n"
+                )
     else:
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(rows, f, indent=2)
@@ -1351,6 +1654,8 @@ def create_documentation_index(
         ("aion_api_documentation.pdf", "Full API reference (PDF)."),
         ("aion_api_documentation.txt", "Full API reference (plain text)."),
         ("aion_api_documentation.md", "Full API reference (Markdown)."),
+        ("aion_api_documentation.html", "Full API reference (static HTML)."),
+        ("aion_api_index.md", "API index as a Markdown table."),
         ("aion_user_guide.pdf", "User guide with examples (PDF)."),
         ("aion_user_guide.txt", "User guide with examples (plain text)."),
         ("aion_installation_guide.txt", "Installation and setup guide."),

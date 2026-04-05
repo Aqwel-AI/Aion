@@ -18,11 +18,19 @@ try:
         fast_mean as _fast_mean_native,
         fast_variance as _fast_variance_native,
         fast_argmax as _fast_argmax_native,
+        fast_argmin as _fast_argmin_native,
+        fast_min as _fast_min_native,
+        fast_max as _fast_max_native,
+        fast_norm1 as _fast_norm1_native,
         fast_relu as _fast_relu_native,
         fast_softmax as _fast_softmax_native,
+        fast_sigmoid as _fast_sigmoid_native,
+        fast_tanh as _fast_tanh_native,
+        fast_clip as _fast_clip_native,
         fast_cumsum as _fast_cumsum_native,
         fast_matrix_vector_mul as _fast_matrix_vector_mul_native,
         fast_lower_bound as _fast_lower_bound_native,
+        fast_upper_bound as _fast_upper_bound_native,
     )
     _NATIVE_AVAILABLE = True
 except ImportError:
@@ -32,11 +40,19 @@ except ImportError:
     _fast_mean_native = None
     _fast_variance_native = None
     _fast_argmax_native = None
+    _fast_argmin_native = None
+    _fast_min_native = None
+    _fast_max_native = None
+    _fast_norm1_native = None
     _fast_relu_native = None
     _fast_softmax_native = None
+    _fast_sigmoid_native = None
+    _fast_tanh_native = None
+    _fast_clip_native = None
     _fast_cumsum_native = None
     _fast_matrix_vector_mul_native = None
     _fast_lower_bound_native = None
+    _fast_upper_bound_native = None
     _NATIVE_AVAILABLE = False
 
 
@@ -186,6 +202,76 @@ def fast_argmax(arr: Union[Sequence[float], np.ndarray]) -> int:
     return int(np.argmax(a))
 
 
+def fast_argmin(arr: Union[Sequence[float], np.ndarray]) -> int:
+    """
+    Index of the minimum value in a 1D array.
+
+    Parameters
+    ----------
+    arr : array-like, 1D
+        Values (float64 or coercible).
+
+    Returns
+    -------
+    int
+        Index of first occurrence of minimum.
+    """
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_argmin expects a 1D array")
+    if a.size == 0:
+        raise ValueError("fast_argmin: empty array")
+    if _NATIVE_AVAILABLE:
+        return int(_fast_argmin_native(a))
+    return int(np.argmin(a))
+
+
+def fast_min(arr: Union[Sequence[float], np.ndarray]) -> float:
+    """Minimum of a 1D array."""
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_min expects a 1D array")
+    if a.size == 0:
+        raise ValueError("fast_min: empty array")
+    if _NATIVE_AVAILABLE:
+        return float(_fast_min_native(a))
+    return float(np.min(a))
+
+
+def fast_max(arr: Union[Sequence[float], np.ndarray]) -> float:
+    """Maximum of a 1D array."""
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_max expects a 1D array")
+    if a.size == 0:
+        raise ValueError("fast_max: empty array")
+    if _NATIVE_AVAILABLE:
+        return float(_fast_max_native(a))
+    return float(np.max(a))
+
+
+def fast_norm1(arr: Union[Sequence[float], np.ndarray]) -> float:
+    """
+    L1 norm: sum of absolute values of a 1D array.
+
+    Parameters
+    ----------
+    arr : array-like, 1D
+        Vector (float64 or coercible).
+
+    Returns
+    -------
+    float
+        sum_i |x_i|.
+    """
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_norm1 expects a 1D array")
+    if _NATIVE_AVAILABLE:
+        return float(_fast_norm1_native(a))
+    return float(np.sum(np.abs(a)))
+
+
 def fast_relu(arr: Union[Sequence[float], np.ndarray]) -> np.ndarray:
     """
     ReLU(x) = max(0, x) element-wise. Returns a new 1D float64 array.
@@ -232,6 +318,68 @@ def fast_softmax(arr: Union[Sequence[float], np.ndarray]) -> np.ndarray:
     a = a - np.max(a)
     e = np.exp(a)
     return e / np.sum(e)
+
+
+def fast_sigmoid(arr: Union[Sequence[float], np.ndarray]) -> np.ndarray:
+    """
+    Sigmoid 1 / (1 + exp(-x)) element-wise. Numerically stable; returns float64 copy.
+
+    Parameters
+    ----------
+    arr : array-like, 1D
+        Values (float64 or coercible).
+
+    Returns
+    -------
+    np.ndarray
+        1D array of same shape.
+    """
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_sigmoid expects a 1D array")
+    if _NATIVE_AVAILABLE:
+        return _fast_sigmoid_native(a)
+    pos = a >= 0.0
+    out = np.empty_like(a)
+    out[pos] = 1.0 / (1.0 + np.exp(-a[pos]))
+    expx = np.exp(a[~pos])
+    out[~pos] = expx / (1.0 + expx)
+    return out
+
+
+def fast_tanh(arr: Union[Sequence[float], np.ndarray]) -> np.ndarray:
+    """Hyperbolic tangent element-wise. Returns a new 1D float64 array."""
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_tanh expects a 1D array")
+    if _NATIVE_AVAILABLE:
+        return _fast_tanh_native(a)
+    return np.tanh(a)
+
+
+def fast_clip(
+    arr: Union[Sequence[float], np.ndarray],
+    lo: float,
+    hi: float,
+) -> np.ndarray:
+    """
+    Clamp each element to ``[lo, hi]``. Returns a new float64 array.
+
+    Parameters
+    ----------
+    arr : array-like, 1D
+        Values (float64 or coercible).
+    lo, hi : float
+        Inclusive bounds; ``lo`` must be <= ``hi``.
+    """
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_clip expects a 1D array")
+    if lo > hi:
+        raise ValueError("fast_clip: lo must be <= hi")
+    if _NATIVE_AVAILABLE:
+        return _fast_clip_native(a, lo, hi)
+    return np.clip(a, lo, hi)
 
 
 def fast_cumsum(arr: Union[Sequence[float], np.ndarray]) -> np.ndarray:
@@ -310,6 +458,30 @@ def fast_lower_bound(arr: Union[Sequence[float], np.ndarray], value: float) -> i
     return int(np.searchsorted(a, value, side="left"))
 
 
+def fast_upper_bound(arr: Union[Sequence[float], np.ndarray], value: float) -> int:
+    """
+    First index ``i`` where ``arr[i] > value``. Assumes ascending order (sorted).
+
+    Parameters
+    ----------
+    arr : array-like, 1D
+        Sorted ascending (float64 or coercible).
+    value : float
+        Search value.
+
+    Returns
+    -------
+    int
+        Smallest index ``i`` with ``arr[i] > value`` (or ``len(arr)`` if none).
+    """
+    a = np.asarray(arr, dtype=np.float64)
+    if a.ndim != 1:
+        raise ValueError("fast_upper_bound expects a 1D array")
+    if _NATIVE_AVAILABLE:
+        return int(_fast_upper_bound_native(a, value))
+    return int(np.searchsorted(a, value, side="right"))
+
+
 def using_native_extension() -> bool:
     """Return True if the C++ extension is loaded."""
     return _NATIVE_AVAILABLE
@@ -319,13 +491,21 @@ __all__ = [
     "fast_sum",
     "fast_dot",
     "fast_norm2",
+    "fast_norm1",
     "fast_mean",
     "fast_variance",
     "fast_argmax",
+    "fast_argmin",
+    "fast_min",
+    "fast_max",
     "fast_relu",
     "fast_softmax",
+    "fast_sigmoid",
+    "fast_tanh",
+    "fast_clip",
     "fast_cumsum",
     "fast_matrix_vector_mul",
     "fast_lower_bound",
+    "fast_upper_bound",
     "using_native_extension",
 ]

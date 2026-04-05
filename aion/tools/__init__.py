@@ -3,6 +3,7 @@ LLM tool-calling helpers: schemas, registry, multi-turn loop, retry, rate limit.
 
 Works with ``OpenAIProvider`` / ``OpenAICompatibleProvider.complete_turn``.
 Optional: ``tiktoken`` via ``pip install aqwel-aion[tools]`` for token estimates.
+See ``aion/tools/README.md`` for package documentation.
 """
 
 from .loop import run_tool_loop, tool_calls_to_message_payload

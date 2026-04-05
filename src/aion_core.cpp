@@ -124,6 +124,75 @@ int64_t fast_argmax(py::array_t<double> arr) {
     return static_cast<int64_t>(best);
 }
 
+int64_t fast_argmin(py::array_t<double> arr) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_argmin: expected 1D array");
+    }
+    const size_t n = buf.shape[0];
+    if (n == 0) {
+        throw std::runtime_error("fast_argmin: empty array");
+    }
+    const double* ptr = static_cast<const double*>(buf.ptr);
+    size_t best = 0;
+    double best_val = ptr[0];
+    for (size_t i = 1; i < n; ++i) {
+        if (ptr[i] < best_val) {
+            best_val = ptr[i];
+            best = i;
+        }
+    }
+    return static_cast<int64_t>(best);
+}
+
+double fast_min(py::array_t<double> arr) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_min: expected 1D array");
+    }
+    const size_t n = buf.shape[0];
+    if (n == 0) {
+        throw std::runtime_error("fast_min: empty array");
+    }
+    const double* ptr = static_cast<const double*>(buf.ptr);
+    double m = ptr[0];
+    for (size_t i = 1; i < n; ++i) {
+        if (ptr[i] < m) m = ptr[i];
+    }
+    return m;
+}
+
+double fast_max(py::array_t<double> arr) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_max: expected 1D array");
+    }
+    const size_t n = buf.shape[0];
+    if (n == 0) {
+        throw std::runtime_error("fast_max: empty array");
+    }
+    const double* ptr = static_cast<const double*>(buf.ptr);
+    double m = ptr[0];
+    for (size_t i = 1; i < n; ++i) {
+        if (ptr[i] > m) m = ptr[i];
+    }
+    return m;
+}
+
+double fast_norm1(py::array_t<double> arr) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_norm1: expected 1D array");
+    }
+    const double* ptr = static_cast<const double*>(buf.ptr);
+    const size_t n = buf.shape[0];
+    double s = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        s += std::fabs(ptr[i]);
+    }
+    return s;
+}
+
 // ---- 1D element-wise (return new array) ----
 
 py::array_t<double> fast_relu(py::array_t<double> arr) {
@@ -186,6 +255,71 @@ py::array_t<double> fast_cumsum(py::array_t<double> arr) {
     return out;
 }
 
+namespace {
+inline double stable_sigmoid(double x) {
+    if (x >= 0.0) {
+        return 1.0 / (1.0 + std::exp(-x));
+    }
+    double z = std::exp(x);
+    return z / (1.0 + z);
+}
+}  // namespace
+
+py::array_t<double> fast_sigmoid(py::array_t<double> arr) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_sigmoid: expected 1D array");
+    }
+    const size_t n = buf.shape[0];
+    const double* in_ptr = static_cast<const double*>(buf.ptr);
+    auto out = py::array_t<double>(n);
+    double* out_ptr = static_cast<double*>(out.request().ptr);
+    for (size_t i = 0; i < n; ++i) {
+        out_ptr[i] = stable_sigmoid(in_ptr[i]);
+    }
+    return out;
+}
+
+py::array_t<double> fast_tanh(py::array_t<double> arr) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_tanh: expected 1D array");
+    }
+    const size_t n = buf.shape[0];
+    const double* in_ptr = static_cast<const double*>(buf.ptr);
+    auto out = py::array_t<double>(n);
+    double* out_ptr = static_cast<double*>(out.request().ptr);
+    for (size_t i = 0; i < n; ++i) {
+        out_ptr[i] = std::tanh(in_ptr[i]);
+    }
+    return out;
+}
+
+py::array_t<double> fast_clip(py::array_t<double> arr, double lo, double hi) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_clip: expected 1D array");
+    }
+    if (lo > hi) {
+        throw std::runtime_error("fast_clip: lo must be <= hi");
+    }
+    const size_t n = buf.shape[0];
+    const double* in_ptr = static_cast<const double*>(buf.ptr);
+    auto out = py::array_t<double>(n);
+    double* out_ptr = static_cast<double*>(out.request().ptr);
+    for (size_t i = 0; i < n; ++i) {
+        double v = in_ptr[i];
+        if (v < lo) {
+            out_ptr[i] = lo;
+        } else if (v > hi) {
+            out_ptr[i] = hi;
+        } else {
+            out_ptr[i] = v;
+        }
+    }
+    return out;
+}
+
 // ---- Matrix-vector: (M, N) @ (N,) -> (M,) ----
 
 py::array_t<double> fast_matrix_vector_mul(py::array_t<double> mat, py::array_t<double> vec) {
@@ -233,6 +367,25 @@ int64_t fast_lower_bound(py::array_t<double> arr, double value) {
     return static_cast<int64_t>(lo);
 }
 
+int64_t fast_upper_bound(py::array_t<double> arr, double value) {
+    py::buffer_info buf = arr.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("fast_upper_bound: expected 1D array");
+    }
+    const double* ptr = static_cast<const double*>(buf.ptr);
+    const size_t n = buf.shape[0];
+    size_t lo = 0, hi = n;
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        if (ptr[mid] <= value) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return static_cast<int64_t>(lo);
+}
+
 PYBIND11_MODULE(_aion_core, m) {
     m.def("fast_sum", &fast_sum,
           "Sum of a 1D float64 array.");
@@ -247,14 +400,31 @@ PYBIND11_MODULE(_aion_core, m) {
           "Variance of a 1D float64 array (ddof=0 population, ddof=1 sample).");
     m.def("fast_argmax", &fast_argmax,
           "Index of maximum value in a 1D float64 array.");
+    m.def("fast_argmin", &fast_argmin,
+          "Index of minimum value in a 1D float64 array.");
+    m.def("fast_min", &fast_min,
+          "Minimum value in a 1D float64 array.");
+    m.def("fast_max", &fast_max,
+          "Maximum value in a 1D float64 array.");
+    m.def("fast_norm1", &fast_norm1,
+          "L1 norm (sum of absolute values) of a 1D float64 array.");
     m.def("fast_relu", &fast_relu,
           "ReLU(x) = max(0, x) element-wise; returns new 1D array.");
     m.def("fast_softmax", &fast_softmax,
           "Numerically stable softmax over 1D float64 array; returns new array.");
+    m.def("fast_sigmoid", &fast_sigmoid,
+          "Sigmoid 1 / (1 + exp(-x)) element-wise; numerically stable; returns new array.");
+    m.def("fast_tanh", &fast_tanh,
+          "Hyperbolic tangent element-wise; returns new array.");
+    m.def("fast_clip", &fast_clip,
+          py::arg("arr"), py::arg("lo"), py::arg("hi"),
+          "Clamp each element to [lo, hi]; returns new array.");
     m.def("fast_cumsum", &fast_cumsum,
           "Cumulative sum of a 1D float64 array; returns new array.");
     m.def("fast_matrix_vector_mul", &fast_matrix_vector_mul,
           "Matrix-vector product: (M, N) @ (N,) -> (M,).");
     m.def("fast_lower_bound", &fast_lower_bound,
           "First index i where arr[i] >= value (assumes ascending order).");
+    m.def("fast_upper_bound", &fast_upper_bound,
+          "First index i where arr[i] > value (assumes ascending order).");
 }

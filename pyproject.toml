@@ -98,8 +98,10 @@ full = [
     "pyyaml>=6.0",
 ]
 metrics = [
-    "numpy>=1.21.0",
     "scikit-learn>=1.0.0",
+]
+dataframe = [
+    "pandas>=1.3.0",
 ]
 
 [build-system]

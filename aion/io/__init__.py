@@ -2,7 +2,7 @@
 Safe file I/O: streaming reads, atomic writes, checksums.
 
 Prefer this module for low-level patterns; use ``aion.files`` for higher-level
-CRUD helpers that print on error.
+CRUD helpers that print on error. Package docs: ``aion/io/README.md``.
 """
 
 from .streaming import iter_lines, read_chunks

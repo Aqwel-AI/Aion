@@ -1,3 +1,5 @@
+![Aion 0.1.9 — Complete AI Research and Development Library by Aqwel AI](0.1.9.png)
+
 # Aqwel-Aion
 
 **Aqwel-Aion v0.1.9 — Complete AI Research and Development Library**
@@ -63,11 +65,12 @@ The design goal is simple: **progressive disclosure**—core installs stay small
 - **`aion.datasets`** — Loaders and iterators for plain text, CSV, and JSONL; batching (`batch_processor`) and record validation (`validate_schema`). Distinct from `aion.former.datasets`, which targets transformer training.
 - **`aion.io`** — Streaming line/chunk reads, atomic writes (`atomic_write`, `atomic_write_bytes`, `save_automatically`), and SHA-256 file hashing/verification.
 - **`aion.providers`** — Chat-style clients for OpenAI, Google Gemini, Anthropic, and OpenAI-compatible HTTP APIs; factory helpers (`create_provider`, `supported_providers`) and typed errors (`ProviderError`). API keys use the usual vendor environment variables (see module docstrings).
-- **Optional native numerics** — `aion._core` exposes `fast_sum`, `fast_dot`, `fast_mean`, `fast_softmax`, `fast_lower_bound`, and related helpers; uses the `aion._aion_core` C++ extension when built with pybind11, otherwise NumPy-backed fallbacks. Use `using_native_extension` to detect availability.
-- **Tests** — Repository `tests/` includes smoke coverage for core utilities (e.g. datasets batching and schema checks). Run with `pytest` after `pip install -e ".[dev]"`.
+- **Optional native numerics** — `aion._core` (re-exported on `aion`) exposes reductions and vector ops: `fast_sum`, `fast_dot`, `fast_mean`, `fast_variance`, `fast_norm2`, `fast_norm1`, `fast_argmax`, `fast_argmin`, `fast_min`, `fast_max`, `fast_relu`, `fast_softmax`, `fast_sigmoid`, `fast_tanh`, `fast_clip`, `fast_cumsum`, `fast_matrix_vector_mul`, `fast_lower_bound`, `fast_upper_bound`, plus `using_native_extension`. Uses `aion._aion_core` when built with pybind11; otherwise NumPy fallbacks.
+- **Documentation helpers (`aion.pdf`)** — Static HTML API pages (`create_api_documentation_html`), symbol search (`search_public_api`), per-module references (`create_module_reference_doc`), Markdown API index export (`export_api_index(..., format="md")`), optional **class** introspection (`generate_module_documentation(..., include_classes=True)`), and INDEX entries for HTML / Markdown artifacts.
+- **Tests** — Repository `tests/` includes `test_smoke`, `test_config`, `test_datasets`, and `test_dataframe`. Run with `pytest` after `pip install -e ".[dev]"`.
 - **`aion.tools`** — `function_tool`, `ToolRegistry`, `run_tool_loop` with `OpenAIProvider.complete_turn`; `post_json_with_retry`, `TokenBucket`, optional token estimates (`[tools]` → tiktoken).
 - **`aion.rag`** — `chunk_text`, `MemoryVectorStore`, `FaissVectorStore` (if FAISS installed), `SimpleRAGIndex` (`[rag]` extra).
-- **`aion.config` / `aion.env` / `aion.logging_utils`** — Load TOML/YAML, merge `AION_*` env overrides, parse `.env`, configure `logging`.
+- **`aion.config` / `aion.env` / `aion.logging_utils`** — Load TOML/YAML, deep-merge layered configs, dotted key access, merge `AION_*` env overrides, optional string→bool/number coercion; parse `.env`; configure `logging`. Notebook: `aion/config/examples/01_config_loading_merge.ipynb`.
 - **`aion.benchmarks`**, **`aion.serialization`**, **`aion.metrics`**, **`aion.dataframe`**, **`aion.packaging`**, **`aion.testing`** — Timings, JSON helpers, Brier/reliability bins, optional pandas splits, `read_version_from_init`, `FakeToolProvider`.
 - **Graphs** — `dijkstra`, `connected_components`, `shortest_path_unweighted`.
 - **Visualization** — `plot_3d_scatter`, `plot_3d_surface`, `save_figures_pdf`, `figures_to_html_img_tags`.
@@ -129,19 +132,19 @@ flowchart LR
 ```mermaid
 sequenceDiagram
   participant App as Your script
-  participant Loop as run_tool_loop
+  participant RTL as run_tool_loop
   participant API as OpenAIProvider.complete_turn
   participant Reg as ToolRegistry
-  App->>Loop: messages plus tool defs
-  Loop->>API: complete_turn
-  API-->>Loop: AssistantTurn tool_calls
+  App->>RTL: messages plus tool defs
+  RTL->>API: complete_turn
+  API-->>RTL: AssistantTurn tool_calls
   loop Each tool call
-    Loop->>Reg: call name plus JSON args
-    Reg-->>Loop: tool message content
+    RTL->>Reg: call name plus JSON args
+    Reg-->>RTL: tool message content
   end
-  Loop->>API: follow-up with tool results
-  API-->>Loop: final text
-  Loop-->>App: text plus full history
+  RTL->>API: follow-up with tool results
+  API-->>RTL: final text
+  RTL-->>App: text plus full history
 ```
 
 #### RAG pipeline (reference implementation)
@@ -161,7 +164,7 @@ flowchart LR
 
 - **Single package:** Public APIs live under `aion`. Prefer `import aion` and attribute access, or explicit `from aion.X import …` for subpackages.
 - **Core single-file modules:** `maths`, `code`, `embed`, `evaluate`, `files`, `git`, `parser`, `pdf`, `prompt`, `snippets`, `text`, `utils`, `watcher`, `cli`, plus **`_core`** (`fast_*` bridge to optional native code).
-- **Data and control plane:** `datasets` (loaders, batching, schema checks), `io` (streaming, atomic writes, checksums), `config`, `env`, `logging_utils`.
+- **Data and control plane:** `datasets` (loaders, batching, schema checks), `io` (streaming, atomic writes, checksums), `config` (implementation in `config/core.py`), `env`, `logging_utils`.
 - **LLM surface:** `providers` (chat REST, `complete` and `complete_turn` where supported), `tools` (OpenAI-style tool JSON, registry, retries, token bucket, optional tiktoken).
 - **Retrieval:** `rag` (chunking, `MemoryVectorStore`, optional `FaissVectorStore`, `SimpleRAGIndex`).
 - **Algorithms and visualization:** `algorithms` (search, arrays, **graphs**: BFS, DFS, toposort, Dijkstra, components, unweighted shortest path), `visualization` (1D/2D/training/**3D**, `save_figures_pdf`, HTML figure bundles).
@@ -180,6 +183,7 @@ Layout below matches the repository as shipped (file names only; omit your local
 ```
 .                              # Project root (clone / sdist)
 ├── README.md
+├── 0.1.9.png                  # README banner (release hero image)
 ├── LICENSE
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
@@ -192,7 +196,10 @@ Layout below matches the repository as shipped (file names only; omit your local
 ├── src/
 │   └── aion_core.cpp          # C++ sources for optional aion._aion_core (pybind11)
 ├── tests/
-│   └── test_smoke.py          # Pytest smoke tests
+│   ├── test_smoke.py          # Core smoke tests
+│   ├── test_config.py
+│   ├── test_datasets.py
+│   └── test_dataframe.py
 └── aion/                      # Python package (see next tree)
 ```
 
@@ -209,9 +216,9 @@ aion/
 │   ├── __init__.py
 │   ├── arrays.py
 │   ├── examples/
+│   │   ├── README.md
 │   │   ├── 01_search_algorithms.ipynb
-│   │   ├── 02_array_utilities.ipynb
-│   │   └── README.md
+│   │   └── 02_array_utilities.ipynb
 │   ├── graphs.py              # bfs, dfs, toposort, dijkstra, connected_components, …
 │   └── search.py
 ├── benchmarks/
@@ -219,9 +226,17 @@ aion/
 ├── cli.py
 ├── code.py
 ├── config/
-│   └── __init__.py            # TOML/YAML, env merge (optional tomli on Python 3.8–3.10)
+│   ├── README.md
+│   ├── __init__.py            # Re-exports from core ([config] extra)
+│   ├── core.py                # TOML/YAML, deep merge, env merge, dotted keys
+│   └── examples/
+│       ├── README.md
+│       ├── __init__.py
+│       ├── 01_config_loading_merge.ipynb
+│       ├── sample.toml
+│       └── sample_override.yaml
 ├── dataframe/
-│   └── __init__.py            # Optional pandas helpers ([ai])
+│   └── __init__.py            # assert_columns, train_val_split_rows ([dataframe] / [ai])
 ├── datasets/
 │   ├── __init__.py
 │   ├── batch.py
@@ -238,17 +253,29 @@ aion/
 │   ├── README.md
 │   ├── __init__.py
 │   ├── core/
+│   │   ├── README.md
 │   │   ├── __init__.py
 │   │   ├── autograd.py
 │   │   ├── operations.py
-│   │   └── tensor.py
+│   │   ├── tensor.py
+│   │   └── examples/
+│   │       ├── README.md
+│   │       ├── __init__.py
+│   │       └── demo_tensor.py
 │   ├── datasets/
+│   │   ├── README.md
 │   │   ├── __init__.py
 │   │   ├── loader.py
-│   │   └── tokenizer.py
+│   │   ├── tokenizer.py
+│   │   └── examples/
+│   │       ├── README.md
+│   │       ├── __init__.py
+│   │       └── demo_tokenizer.py
 │   ├── docs/
 │   │   └── architecture.md
 │   ├── example.py
+│   ├── example_attention.png      # Sample attention figure (docs / previews)
+│   ├── example_training_metrics.png
 │   ├── examples/
 │   │   ├── README.md
 │   │   ├── __init__.py
@@ -259,32 +286,57 @@ aion/
 │   ├── examples_results/
 │   │   └── README.md
 │   ├── experiments/
+│   │   ├── README.md
 │   │   ├── __init__.py
 │   │   ├── config.yaml
-│   │   └── train_small_model.py
+│   │   ├── train_small_model.py
+│   │   └── examples/
+│   │       ├── README.md
+│   │       ├── __init__.py
+│   │       └── demo_config.py
 │   ├── models/
+│   │   ├── README.md
 │   │   ├── __init__.py
 │   │   ├── attention.py
 │   │   ├── embedding.py
 │   │   ├── feedforward.py
-│   │   └── transformer.py
+│   │   ├── transformer.py
+│   │   └── examples/
+│   │       ├── README.md
+│   │       ├── __init__.py
+│   │       └── demo_forward.py
 │   ├── training/
+│   │   ├── README.md
 │   │   ├── __init__.py
 │   │   ├── checkpoint.py    # weights npz + save_checkpoint_sidecar_meta
 │   │   ├── loss.py
 │   │   ├── optimizer.py
-│   │   └── trainer.py
+│   │   ├── trainer.py
+│   │   └── examples/
+│   │       ├── README.md
+│   │       ├── __init__.py
+│   │       └── demo_loss.py
 │   └── visualization/
+│       ├── README.md
 │       ├── __init__.py
 │       ├── attention_map.py
 │       ├── training_metrics.py
-│       └── weight_spectrum.py
+│       ├── weight_spectrum.py
+│       └── examples/
+│           ├── README.md
+│           ├── __init__.py
+│           └── demo_attention_plot.py
 ├── git.py
 ├── io/
+│   ├── README.md
 │   ├── __init__.py
 │   ├── atomic.py
 │   ├── checksum.py
-│   └── streaming.py
+│   ├── streaming.py
+│   └── examples/
+│       ├── README.md
+│       ├── __init__.py
+│       └── demo_atomic_checksum.py
 ├── logging_utils/
 │   └── __init__.py            # setup_logging, LOG_LEVEL
 ├── maths.py
@@ -296,6 +348,7 @@ aion/
 ├── pdf.py
 ├── prompt.py
 ├── providers/
+│   ├── README.md
 │   ├── __init__.py
 │   ├── anthropic_provider.py
 │   ├── base.py
@@ -305,16 +358,25 @@ aion/
 │   ├── generic_openai.py
 │   ├── http_utils.py
 │   ├── openai_provider.py
-│   └── structured.py          # AssistantTurn, NormalizedToolCall, parse_chat_completion_response
+│   ├── structured.py          # AssistantTurn, NormalizedToolCall, parse_chat_completion_response
+│   └── examples/
+│       ├── README.md
+│       ├── __init__.py
+│       └── demo_factory_parse.py
 ├── rag/
+│   ├── README.md
 │   ├── __init__.py
 │   ├── chunking.py
 │   ├── pipeline.py            # SimpleRAGIndex
 │   ├── types.py               # VectorStore, ScoredChunk
-│   └── stores/
+│   ├── stores/
+│   │   ├── __init__.py
+│   │   ├── faiss_store.py
+│   │   └── memory.py
+│   └── examples/
+│       ├── README.md
 │       ├── __init__.py
-│       ├── faiss_store.py
-│       └── memory.py
+│       └── demo_simple_index.py
 ├── serialization/
 │   └── __init__.py            # JSON-safe helpers, checkpoint_meta
 ├── snippets.py
@@ -322,20 +384,29 @@ aion/
 │   └── __init__.py            # FakeToolProvider, make_tool_turn
 ├── text.py
 ├── tools/
+│   ├── README.md
 │   ├── __init__.py
 │   ├── loop.py                # run_tool_loop
 │   ├── rate_limit.py
 │   ├── registry.py
 │   ├── retry.py
 │   ├── schemas.py
-│   └── tokens.py
+│   ├── tokens.py
+│   └── examples/
+│       ├── README.md
+│       ├── __init__.py
+│       └── demo_tool_loop.py
 ├── utils.py
 ├── visualization/
 │   ├── README.md
 │   ├── __init__.py
 │   ├── arrays.py
 │   ├── classification.py
-│   ├── examples/              # Jupyter notebooks
+│   ├── examples/
+│   │   ├── README.md
+│   │   ├── 01_array_visualization.ipynb
+│   │   ├── 02_matrix_visualization.ipynb
+│   │   └── 03_training_visualization.ipynb
 │   ├── examples_visualization/  # Example PNG previews
 │   ├── matrices.py
 │   ├── report.py              # save_figures_pdf, figures_to_html_img_tags
@@ -511,7 +582,7 @@ The repository includes an `example.py` in the project root that demonstrates vi
 
 - **Search (aion.algorithms.search):** Binary search, lower_bound, upper_bound; jump search, exponential search, linear search; first/last occurrence; is_sorted, find_peak_element; rotated sorted array search, ternary search, interpolation search.
 - **Arrays (aion.algorithms.arrays):** flatten_array, flatten_deep, chunk_array, pairwise, sliding_window, rolling_sum, remove_duplicates, moving_avarage, pad_array.
-- **Graphs:** Placeholder for future graph traversal and shortest-path algorithms (BFS, DFS, Dijkstra, toposort).
+- **Graphs (`aion.algorithms.graphs`):** BFS, DFS, topological sort, Dijkstra, connected components, unweighted shortest path, and related helpers.
 - Jupyter example notebooks in `aion/algorithms/examples/` with full API coverage and explanations.
 
 ### Visualization
@@ -530,23 +601,26 @@ The repository includes an `example.py` in the project root that demonstrates vi
 
 ### Documentation Generation
 
-- **PDF and text:** API reference, user guides, changelogs, module dependency reports; configurable branding (colors, fonts, logo).
-- **Markdown:** API documentation with table of contents.
-- **Exports:** Machine-readable API index (JSON/CSV), function lists. ReportLab is optional; entry points fall back to text or Markdown when ReportLab is not installed.
+- **PDF and text:** Full API reference, user guides, changelogs, module dependency reports; configurable branding (colors, fonts, logo). ReportLab is optional—PDF entry points fall back to plain text when it is not installed.
+- **Markdown and HTML:** `create_api_documentation_md` (TOC + per-module sections), `create_api_documentation_html` (self-contained static page, no extra deps).
+- **Single module:** `create_module_reference_doc` writes Markdown, text, or PDF for one `aion.*` submodule; optional class and method listings.
+- **Discovery:** `search_public_api(query)` finds public functions (and optionally classes) by name substring across documentable modules.
+- **Exports:** `export_api_index` as JSON, CSV, or **Markdown table**; optional `include_classes=True`. `export_function_list`, dependency Mermaid snippets in text reports.
+- **Introspection:** `generate_module_documentation(module, include_classes=False)` lists public functions; set `include_classes=True` for classes defined in that module and their public methods.
 
 ### Development and Infrastructure
 
 - **File management:** Create, move, copy, delete; directory listing and organization helpers.
-- **Datasets (`aion.datasets`):** `load_text`, `iter_text_lines`, `load_csv`, `iter_csv_rows`, `load_jsonl`, `iter_jsonl`, `batch_processor`, `validate_schema` for lightweight ETL and ML prep.
-- **Safe I/O (`aion.io`):** `iter_lines`, `read_chunks`, atomic writes, SHA-256 `file_sha256` / `verify_sha256` for reproducible pipelines.
-- **LLM providers (`aion.providers`):** `OpenAIProvider`, `GeminiProvider`, `AnthropicProvider`, `OpenAICompatibleProvider`, `create_provider`, `supported_providers`. OpenAI-shaped APIs also expose **`complete_turn`** → `AssistantTurn` with optional **`tool_calls`**; see `aion.providers.structured`.
-- **Tool calling (`aion.tools`, extra `[tools]` for tiktoken):** `function_tool`, `ToolRegistry`, `run_tool_loop`, `post_json_with_retry`, `TokenBucket`, token estimation helpers.
-- **RAG (`aion.rag`, extra `[rag]`):** `chunk_text`, `MemoryVectorStore`, `FaissVectorStore`, `SimpleRAGIndex` over `aion.embed`.
+- **Datasets (`aion.datasets`):** Text/CSV/JSONL I/O (stream or load), `dump_jsonl` / `append_jsonl_line`, `iter_batches`, `csv_fieldnames`, `count_csv_rows`, schema helpers—stdlib only.
+- **Safe I/O (`aion.io`):** `iter_lines`, `read_chunks`, atomic writes, SHA-256 `file_sha256` / `verify_sha256`. Runnable demo: `python -m aion.io.examples.demo_atomic_checksum`.
+- **LLM providers (`aion.providers`):** `OpenAIProvider`, `GeminiProvider`, `AnthropicProvider`, `OpenAICompatibleProvider`, `create_provider`, `supported_providers`. OpenAI-shaped APIs also expose **`complete_turn`** → `AssistantTurn` with optional **`tool_calls`**; see `aion.providers.structured`. Offline demo: `python -m aion.providers.examples.demo_factory_parse`.
+- **Tool calling (`aion.tools`, extra `[tools]` for tiktoken):** `function_tool`, `ToolRegistry`, `run_tool_loop`, `post_json_with_retry`, `TokenBucket`, token estimation helpers. Offline demo: `python -m aion.tools.examples.demo_tool_loop`.
+- **RAG (`aion.rag`, extra `[rag]`):** `chunk_text`, `MemoryVectorStore`, `FaissVectorStore`, `SimpleRAGIndex` over `aion.embed`. Local demo: `python -m aion.rag.examples.demo_simple_index`.
 - **Config & runtime:** `aion.config` (TOML/YAML + env merge), `aion.env` (`.env` parsing), `aion.logging_utils` (`setup_logging`).
 - **Benchmarks & serialization:** `aion.benchmarks`, `aion.serialization` (JSON-safe experiment files, `checkpoint_meta`).
-- **Optional analytics:** `aion.metrics`, `aion.dataframe` (behind `[ai]` / `[metrics]`).
+- **Optional analytics:** `aion.metrics` (`[metrics]` / `[ai]`); `aion.dataframe` (`[dataframe]` or `[ai]`) — `assert_columns`, `train_val_split_rows` (pandas required).
 - **Maintainers & tests:** `aion.packaging`, `aion.testing` (`FakeToolProvider`, etc.).
-- **Fast numerics (`aion` / `_core`):** Exported `fast_*` helpers and `using_native_extension` when the C++ extension is built.
+- **Fast numerics (`aion` / `_core`):** Same `fast_*` API with or without the C++ extension—native build accelerates the hot paths; `using_native_extension` reports which path is active.
 - **Visualization extras:** `plot_3d_scatter`, `plot_3d_surface`, `save_figures_pdf`, `figures_to_html_img_tags` in `aion.visualization` (matplotlib; `[viz]`).
 - **Code parser:** Language detection and detailed analysis for 30+ programming languages (see [Supported Languages](#supported-languages)).
 - **Real-time monitoring:** File change detection and callbacks via the watcher module.
@@ -561,7 +635,7 @@ The repository includes an `example.py` in the project root that demonstrates vi
 - **Training:** Cross-entropy loss, Adam optimizer, `Trainer` with `train_step` / `train_epoch`.
 - **Data:** Character- or word-level tokenizer, sliding-window text dataset, batch loader.
 - **Visualization:** Attention heatmaps (per head/layer), training loss over epochs, weight eigenvalue/singular-value spectrum.
-- **Install:** `pip install aqwel-aion[former]`. Run: `python -m aion.former.experiments.train_small_model`, `python -m aion.former.examples.attention_demo`, `python -m aion.former.examples.text_generation`.
+- **Install:** `pip install aqwel-aion[former]`. Run: `python -m aion.former.experiments.train_small_model`, `python -m aion.former.examples.attention_demo`, `python -m aion.former.examples.text_generation`. Per-subpackage demos: `python -m aion.former.core.examples.demo_tensor`, `aion.former.datasets.examples.demo_tokenizer`, `aion.former.experiments.examples.demo_config`, `aion.former.models.examples.demo_forward`, `aion.former.training.examples.demo_loss`, `aion.former.visualization.examples.demo_attention_plot`.
 
 ---
 
@@ -691,6 +765,9 @@ import aion
 print("Native extension active:", aion.using_native_extension())
 x = [1.0, 2.0, 3.0]
 print(aion.fast_sum(x), aion.fast_mean(x), aion.fast_softmax(x))
+print(aion.fast_norm1([-1.0, 2.0]), aion.fast_clip(x, 0.0, 2.5))
+sorted_keys = [0.0, 0.5, 1.0, 1.5]
+print(aion.fast_lower_bound(sorted_keys, 1.0), aion.fast_upper_bound(sorted_keys, 1.0))
 ```
 
 ### Visualization (requires matplotlib)
@@ -833,9 +910,14 @@ import aion
 
 aion.pdf.generate_complete_documentation("my_docs")
 aion.pdf.create_api_documentation("api_ref.pdf")
+aion.pdf.create_api_documentation_html("api_ref.html")
 aion.pdf.create_user_guide_pdf("user_guide.pdf")
 aion.pdf.create_changelog_pdf("changelog.pdf")
-# Many more: create_api_documentation_md, create_module_dependency_doc, export_api_index, etc.
+aion.pdf.create_module_reference_doc("text", format="md")  # e.g. aion_text_reference.md
+aion.pdf.export_api_index("api_index.md", format="md")
+hits = aion.pdf.search_public_api("embed")  # [{"module", "kind", "name"}, ...]
+# Also: create_api_documentation_md, create_text_documentation, create_module_dependency_doc,
+# export_api_index(..., include_classes=True), validate_documentation, create_documentation_index, …
 ```
 
 ### Embeddings (optional: sentence-transformers)
@@ -926,19 +1008,19 @@ Run from command line: `python -m aion.former.experiments.train_small_model`, `p
 | Module | Description |
 |--------|-------------|
 | `aion.maths` | Mathematics, statistics, linear algebra, ML helpers, signal processing. |
-| `aion.datasets` | Text, CSV, JSONL loaders and iterators; batching; schema validation for dict-like records. |
-| `aion.io` | Streaming reads, atomic writes, SHA-256 checksum helpers. |
-| `aion.providers` | Chat clients + `create_provider`; `complete` and **`complete_turn`** (OpenAI / OpenAI-compatible); `AssistantTurn` / `NormalizedToolCall` in `structured`. |
-| `aion` (`fast_*`, `using_native_extension`) | Optional C++-accelerated numerics via `_core`; NumPy when the extension is not built. |
+| `aion.datasets` | Text, CSV, JSONL loaders and iterators; batching; schema validation (`batch.py`, `csv.py`, `jsonl.py`, `schema.py`, `text.py`). |
+| `aion.io` | Streaming reads, atomic writes, SHA-256 checksum helpers. [`aion/io/README.md`](aion/io/README.md), [`aion/io/examples/`](aion/io/examples/). |
+| `aion.providers` | Chat clients + `create_provider`; `complete` / **`complete_turn`**. [`aion/providers/README.md`](aion/providers/README.md), [`aion/providers/examples/`](aion/providers/examples/). |
+| `aion` (`fast_*`, `using_native_extension`) | 1D/2D numerics: sums, dot/norms, mean/variance, argmin/max, min/max, ReLU/softmax/sigmoid/tanh/clip, cumsum, matvec, sorted `lower_bound` / `upper_bound`; C++ when `_aion_core` is built else NumPy. |
 | `aion.algorithms` | Search, array utilities, **graphs** (BFS, DFS, toposort, Dijkstra, connected components, unweighted shortest path). |
 | `aion.visualization` | 1D/2D/training plots; heatmaps, confusion matrices, attention maps; **3D** plots; multi-page **PDF** / HTML figure reports; `save_plot` utility. |
-| `aion.former` | Transformer training: Transformer, Trainer, TextDataset, tokenizer, attention/training/weight-spectrum plots. Install with `[former]`. |
+| `aion.former` | Transformer training: Transformer, Trainer, TextDataset, tokenizer, attention/training/weight-spectrum plots. Install with `[former]`. See [`aion/former/README.md`](aion/former/README.md) and per-subpackage `examples/` (e.g. `aion/former/core/examples/`). |
 | `aion.embed` | Text embeddings and vector similarity (optional: sentence-transformers). |
 | `aion.evaluate` | Classification and regression metrics; file-based evaluation. |
 | `aion.code` | Code explanation, extraction, complexity, docstrings, code smells. |
 | `aion.prompt` | Prompt templates and utilities. |
 | `aion.snippets` | Code snippet utilities. |
-| `aion.pdf` | API/user-guide/changelog generation (PDF, text, Markdown); optional ReportLab. |
+| `aion.pdf` | API/user-guide/changelog (PDF, text, Markdown, **HTML**), module dependency reports, `search_public_api`, `create_module_reference_doc`, `export_api_index` (JSON/CSV/**MD**), class-aware introspection. Optional ReportLab for PDF. |
 | `aion.parser` | Language detection and code parsing (30+ languages). |
 | `aion.files` | File and directory operations. |
 | `aion.watcher` | Real-time file change monitoring. |
@@ -946,15 +1028,15 @@ Run from command line: `python -m aion.former.experiments.train_small_model`, `p
 | `aion.utils` | General utilities. |
 | `aion.text` | Text processing. |
 | `aion.cli` | Command-line interface. |
-| `aion.tools` | LLM tool schemas, registry, `run_tool_loop`, retry/rate-limit helpers, token estimates (`[tools]`). |
-| `aion.rag` | Chunking, vector stores, `SimpleRAGIndex` (`[rag]` / FAISS optional). |
-| `aion.config` | TOML/YAML load + env merge (`[config]`). |
+| `aion.tools` | Tool schemas, registry, `run_tool_loop`, retry/rate-limit, token estimates (`[tools]`). [`aion/tools/README.md`](aion/tools/README.md), [`aion/tools/examples/`](aion/tools/examples/). |
+| `aion.rag` | Chunking, vector stores, `SimpleRAGIndex` (`[rag]`). [`aion/rag/README.md`](aion/rag/README.md), [`aion/rag/examples/`](aion/rag/examples/). |
+| `aion.config` | TOML/YAML load, layered files, dotted keys, env merge, typed coercion (`[config]`). See [`aion/config/README.md`](aion/config/README.md) and [`aion/config/examples/`](aion/config/examples/). |
 | `aion.env` | `.env` file parsing, `require_env`. |
 | `aion.logging_utils` | Root logging setup from `LOG_LEVEL`. |
 | `aion.benchmarks` | `timed_run`, NumPy vs `fast_sum` comparison. |
 | `aion.serialization` | JSON-safe read/write, `checkpoint_meta`. |
 | `aion.metrics` | Brier score, reliability bins; optional sklearn report (`[metrics]` / `[ai]`). |
-| `aion.dataframe` | Optional pandas column checks and train/val split (`[ai]`). |
+| `aion.dataframe` | Pandas helpers: `assert_columns`, `train_val_split_rows` (`[dataframe]` or `[ai]`). Single module file `aion/dataframe/__init__.py`. |
 | `aion.packaging` | `read_version_from_init` for maintainers. |
 | `aion.testing` | `FakeToolProvider` and helpers for pytest. |
 
@@ -984,11 +1066,14 @@ See `aion.parser` and `aion.code` for language-specific behavior and APIs.
 - **Official site:** [https://aqwelai.xyz/](https://aqwelai.xyz/)
 - **PyPI:** [https://pypi.org/project/aqwel-aion/](https://pypi.org/project/aqwel-aion/)
 - **Package metadata and URLs:** See [pyproject.toml](pyproject.toml) for project links and optional dependencies.
-- **This README:** Architecture **Mermaid diagrams**, full `aion/` **source tree**, and an **optional extras matrix** for onboarding.
-- **In-package docs:** Use `aion.pdf.generate_complete_documentation(output_dir)` to generate API and user-guide artifacts. Algorithm and visualization API details are in `aion/algorithms/README.md` and `aion/visualization/README.md`.
-- **Example notebooks:**
-  - Algorithms: `aion/algorithms/examples/` (search, array utilities).
-  - Visualization: `aion/visualization/examples/` (array, matrix, training plots).
+- **This README:** Architecture **Mermaid diagrams** (sequence-diagram actor IDs avoid reserved words such as `loop`—see tool-calling diagram), full `aion/` **source tree**, and an **optional extras matrix** for onboarding.
+- **In-package docs:** Use `aion.pdf.generate_complete_documentation(output_dir)` for API + user-guide bundles, or `create_api_documentation_html` / `create_api_documentation_md` for a single browsable reference. Algorithm and visualization details live in `aion/algorithms/README.md` and `aion/visualization/README.md`.
+- **Example notebooks and demos:**
+  - Algorithms: `aion/algorithms/examples/` (`01_search_algorithms.ipynb`, `02_array_utilities.ipynb`).
+  - Visualization: `aion/visualization/examples/` (`01_array_visualization.ipynb`, `02_matrix_visualization.ipynb`, `03_training_visualization.ipynb`).
+  - Config: `aion/config/examples/` (layered TOML/YAML + `01_config_loading_merge.ipynb`).
+  - I/O & LLM stack (runnable `python -m …`): `aion/io/examples/`, `aion/providers/examples/`, `aion/rag/examples/`, `aion/tools/examples/`.
+  - Former: `aion/former/examples/` (attention, text generation) plus `aion/former/*/examples/` (core, datasets, experiments, models, training, visualization).
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md) for version history.
 - **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and pull request process.
 
@@ -1004,7 +1089,7 @@ This repository is open source. The following **should show** (and are committed
 | **Config** | `pyproject.toml`, `setup.py`, `MANIFEST.in`, `requirements.txt` |
 | **Source** | `aion/**/*.py`, `src/aion_core.cpp` |
 | **Tests** | `tests/` (pytest smoke tests; install with `pip install -e ".[dev]"`) |
-| **Examples** | `example.py`, `main.py`, Jupyter notebooks in `aion/algorithms/examples/`, `aion/visualization/examples/` |
+| **Examples** | `example.py`, `main.py`; notebooks in `aion/algorithms/examples/`, `aion/visualization/examples/`, `aion/config/examples/`; `python -m` demos under `aion/io/examples/`, `aion/providers/examples/`, `aion/rag/examples/`, `aion/tools/examples/`, `aion/former/*/examples/` |
 | **Example assets** | `aion/visualization/examples_visualization/*.png` (plot previews); `aion/former/examples/*.png` (attention demos); `aion/former/examples_results/` (see folder README; PNG outputs may be gitignored) |
 | **Repo meta** | `.gitignore` |
 
@@ -1047,7 +1132,8 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Library Statistics
 
-- **30+ distinct subpackages and top-level modules** under `aion/` (core maths/code/embed/…, `datasets`, `io`, `providers`, `tools`, `rag`, `config`, `env`, `logging_utils`, `benchmarks`, `serialization`, `metrics`, `dataframe`, `packaging`, `testing`, `algorithms`, `visualization` with 3D/report helpers, `former`, optional `fast_*`).
+- **30+ distinct subpackages and top-level modules** under `aion/` (core maths/code/embed/…, `datasets`, `io`, `providers`, `tools`, `rag`, `config`, `env`, `logging_utils`, `benchmarks`, `serialization`, `metrics`, `dataframe`, `packaging`, `testing`, `algorithms`, `visualization` with 3D/report helpers, `former`, optional native **`fast_*`** helpers on the top-level package).
+- **19 `fast_*` entry points** (plus `using_native_extension`) for 1D/2D vector numerics, re-exported from `aion`.
 - **71+ mathematical functions** in the maths module.
 - **Aion Former:** Decoder-only transformer training with NumPy autograd, multi-head attention, and visualization (optional `[former]` extra).
 - **Full research pipeline** from data and algorithms through visualization and documentation.

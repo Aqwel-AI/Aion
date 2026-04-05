@@ -1,2 +1,20 @@
 include README.md
+include 0.1.9.png
 recursive-include aion *.py
+recursive-include aion/io *.md
+recursive-include aion/io/examples *.md *.py
+recursive-include aion/providers *.md
+recursive-include aion/providers/examples *.md *.py
+recursive-include aion/rag *.md
+recursive-include aion/rag/examples *.md *.py
+recursive-include aion/tools *.md
+recursive-include aion/tools/examples *.md *.py
+recursive-include aion/config/examples *.ipynb *.toml *.yaml *.md
+recursive-include aion/dataframe/examples *.ipynb *.csv *.md
+recursive-include aion/datasets/examples *.ipynb *.csv *.jsonl *.txt *.md
+recursive-include aion/former/core *.md
+recursive-include aion/former/datasets *.md
+recursive-include aion/former/experiments *.md
+recursive-include aion/former/models *.md
+recursive-include aion/former/training *.md
+recursive-include aion/former/visualization *.md

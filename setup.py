@@ -123,27 +123,29 @@ setup(
             "pyyaml>=6.0",
         ],
 
-        # Machine learning and AI stack
+        # Machine learning and AI stack (keep in sync with pyproject.toml)
         "ai": [
             "scipy>=1.7.0",
             "scikit-learn>=1.0.0",
             "pandas>=1.3.0",
+            "matplotlib>=3.5.0",
             "transformers>=4.20.0",
             "torch>=1.12.0",
+            "openai>=1.0.0",
             "sentence-transformers>=2.2.0",
         ],
 
         # Documentation and export tools
         "docs": [
             "reportlab>=3.6.0",
-            "pillow>=8.0.0",
+            "pillow>=9.0.0",
         ],
 
         # Development tools
         "dev": [
-            "pytest>=6.0",
-            "black>=21.0",
-            "flake8>=3.8",
+            "pytest>=7.0",
+            "black>=23.0",
+            "flake8>=6.0",
         ],
 
         "tools": [
@@ -161,7 +163,11 @@ setup(
             "scikit-learn>=1.0.0",
         ],
 
-        # Full installation (all features)
+        "dataframe": [
+            "pandas>=1.3.0",
+        ],
+
+        # Full installation (all features; keep in sync with pyproject.toml)
         "full": [
             "scipy>=1.7.0",
             "scikit-learn>=1.0.0",
@@ -174,7 +180,7 @@ setup(
             "faiss-cpu>=1.7.0",
             "sentence-transformers>=2.2.0",
             "reportlab>=3.6.0",
-            "pillow>=8.0.0",
+            "pillow>=9.0.0",
             "tiktoken>=0.5.0",
             "tomli>=2.0.0; python_version<'3.11'",
             "pyyaml>=6.0",

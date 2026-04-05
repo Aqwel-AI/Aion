@@ -109,14 +109,22 @@ from ._core import (
     fast_sum,
     fast_dot,
     fast_norm2,
+    fast_norm1,
     fast_mean,
     fast_variance,
     fast_argmax,
+    fast_argmin,
+    fast_min,
+    fast_max,
     fast_relu,
     fast_softmax,
+    fast_sigmoid,
+    fast_tanh,
+    fast_clip,
     fast_cumsum,
     fast_matrix_vector_mul,
     fast_lower_bound,
+    fast_upper_bound,
     using_native_extension,
 )
 
@@ -161,13 +169,21 @@ __all__ = [
     "fast_sum",         # Fast 1D sum (C++ when built)
     "fast_dot",         # Fast dot product (C++ when built)
     "fast_norm2",       # Fast L2 norm (C++ when built)
+    "fast_norm1",       # Fast L1 norm (C++ when built)
     "fast_mean",        # Fast mean (C++ when built)
     "fast_variance",    # Fast variance (C++ when built)
     "fast_argmax",      # Fast argmax (C++ when built)
+    "fast_argmin",      # Fast argmin (C++ when built)
+    "fast_min",         # Fast min reduction (C++ when built)
+    "fast_max",         # Fast max reduction (C++ when built)
     "fast_relu",        # Fast ReLU (C++ when built)
     "fast_softmax",     # Fast softmax (C++ when built)
+    "fast_sigmoid",     # Fast sigmoid (C++ when built)
+    "fast_tanh",        # Fast tanh (C++ when built)
+    "fast_clip",        # Fast clip to interval (C++ when built)
     "fast_cumsum",      # Fast cumulative sum (C++ when built)
     "fast_matrix_vector_mul",  # Fast matrix-vector product (C++ when built)
     "fast_lower_bound",  # Fast lower_bound on sorted array (C++ when built)
+    "fast_upper_bound",  # Fast upper_bound on sorted array (C++ when built)
     "using_native_extension",
 ]

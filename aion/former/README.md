@@ -258,16 +258,18 @@ Training is configured via **`aion/former/experiments/config.yaml`** (or the fal
 ```
 aion/former/
 ├── __init__.py          # Version, Transformer, Trainer, datasets, visualization
-├── core/                # Tensor, autograd, operations (matmul, softmax, layer_norm, attention)
-├── models/              # Transformer, MultiHeadAttention, FeedForward, Embedding, PositionalEncoding
-├── training/             # Trainer, Adam, cross_entropy_loss
-├── datasets/             # TextDataset, create_dataloader, SimpleTokenizer
-├── visualization/        # plot_attention_map, plot_multi_head_attention, plot_training_metrics, plot_weight_spectrum
-├── experiments/          # train_small_model.py, config.yaml
-├── examples/             # attention_demo, text_generation
-├── docs/                 # architecture.md
-└── README.md             # This file
+├── core/                # Tensor, ops — core/README.md, core/examples/
+├── models/              # Transformer — models/README.md, models/examples/
+├── training/            # Trainer, loss — training/README.md, training/examples/
+├── datasets/            # TextDataset, tokenizer — datasets/README.md, datasets/examples/
+├── visualization/       # Plots — visualization/README.md, visualization/examples/
+├── experiments/         # train_small_model, config.yaml — experiments/README.md, experiments/examples/
+├── examples/            # attention_demo, text_generation
+├── docs/                # architecture.md
+└── README.md            # This file
 ```
+
+Each of **`core/`**, **`datasets/`**, **`experiments/`**, **`models/`**, **`training/`**, and **`visualization/`** includes a **`README.md`** with module-level documentation (API tables, layout, and cross-links), similar in spirit to **`aion/algorithms/README.md`**.
 
 ---
 
