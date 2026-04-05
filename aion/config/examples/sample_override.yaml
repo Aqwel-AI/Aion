@@ -1,0 +1,7 @@
+# Layered on top of sample.toml in the notebook — later layers win.
+app:
+  debug: true
+db:
+  host: "db.internal.example"
+logging:
+  level: INFO

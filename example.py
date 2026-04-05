@@ -1,39 +1,45 @@
 """
-Full test of aion.algorithms, aion.visualization, and new features in v0.1.8.
+Full exercise script for aion.algorithms, aion.visualization, v0.1.8 pdf helpers,
+and v0.1.9 additions (datasets, I/O, LLM stack, RAG, config/env, benchmarks,
+serialization, graphs, 3D/report plots, extended pdf APIs).
 
-This script exercises every exported function from both packages so you can
-verify behaviour and see typical usage. Output is printed for algorithms;
-all plots are written to example_output/ (no interactive display), so the
-script is safe to run in a terminal or CI.
+Output is printed for algorithms and infra; standard plots go to example_output/;
+v0.1.9 extras also write under example_output/v019_examples/.
 
 Contents:
-  - Section 1: aion.algorithms
-    - Search: binary search, lower/upper bound, is_sorted, jump/exponential/linear
-      search, first/last occurrence, rotated/ternary/interpolation search, find_peak.
-    - Arrays: flatten (one-level and deep), chunk, remove_duplicates, moving_avarage,
-      sliding_window, pad_array (in-place), rolling_sum, pairwise.
-  - Section 2: aion.visualization
-    - 1D: array, histogram, scatter, multiple arrays, mean, running mean, boxplot,
-      density, CDF, error bars, rolling std, min-max band, autocorrelation, quantiles,
-      scatter with fit, dual axis.
-    - 2D: heatmap, confusion (raw and normalized), surface, contour, with values,
-      correlation/similarity matrix, matrix histogram, masked heatmap, attention map,
-      sparsity.
-    - Training: history, single metric, train vs val, learning rate, metric with best,
-      metrics grid, confidence band, early stopping, epoch time.
-  - Section 3: What's new in v0.1.8 (aion.pdf)
-    - get_documentation_statistics: module/function counts and per-module stats.
-    - create_installation_guide: installation and setup guide (TXT or PDF).
-    - create_quick_reference: compact function names by module (TXT or PDF).
-    - validate_documentation: report which public functions lack docstrings.
-    - create_documentation_index: INDEX.md listing all generated docs.
+  - Section 1: aion.algorithms (search + arrays)
+  - Section 2: aion.visualization (1D/2D/training plots)
+  - Section 3: v0.1.8 — aion.pdf documentation helpers (stats, guides, validation)
+  - Section 4: v0.1.9 — full surface area
+    - fast_* numerics + using_native_extension
+    - aion.datasets (text/CSV/JSONL, batch_processor, validate_schema)
+    - aion.io (atomic_write, iter_lines, file_sha256)
+    - aion.serialization (JSON helpers, checkpoint_meta)
+    - aion.providers (supported_providers, parse_chat_completion_response; no API keys)
+    - aion.tools + aion.testing (run_tool_loop with FakeToolProvider)
+    - aion.rag (SimpleRAGIndex with local fake embedder)
+    - aion.config (deep_merge, get_nested; optional sample TOML from package examples)
+    - aion.env (load_dotenv_file on a temp .env)
+    - aion.logging_utils (setup_logging)
+    - aion.benchmarks (timed_run, compare_sum_numpy_vs_fast)
+    - aion.packaging (read_version_from_init)
+    - aion.algorithms.graphs (dijkstra, connected_components, shortest_path_unweighted)
+    - aion.visualization (plot_3d_scatter, plot_3d_surface, save_figures_pdf)
+    - aion.pdf (search_public_api, export_api_index md, create_api_documentation_html)
+    - aion.tools extras: TokenBucket (rate limit)
+    - Optional: aion.metrics, aion.dataframe when extras are installed
 
 Run: python example.py
-Requires: pip install aqwel-aion[full] (or at least matplotlib, numpy for visualization).
+Requires: pip install aqwel-aion[full] (or matplotlib + numpy at minimum for sections 1–2;
+[config] for TOML sample load in section 4).
 """
 
-import os
 import copy
+import os
+import tempfile
+from pathlib import Path
+
+import numpy as np
 
 # ---------------------------------------------------------------------------
 # 1. aion.algorithms — search and array utilities
@@ -350,13 +356,277 @@ from aion.pdf import create_documentation_index
 index_path = create_documentation_index(output_dir=DOCS_DIR)
 print("create_documentation_index() ->", index_path)
 
-# Package metadata (v0.1.8): Author and Developer for team reference
+# Package metadata (section 3 reference)
 print()
-print("Package metadata (v0.1.8):")
+print("Package metadata:")
 print("  __version__:", aion.__version__)
 print("  __author__:", aion.__author__)
 print("  __developer__:", aion.__developer__)
 
 print()
 print("All v0.1.8 doc outputs saved to", DOCS_DIR)
+
+# ---------------------------------------------------------------------------
+# 4. What's new in v0.1.9 — datasets, I/O, LLM stack, RAG, infra, graphs, 3D, PDF
+# ---------------------------------------------------------------------------
+print()
+print("=" * 60)
+print("What's new in v0.1.9 — full examples")
+print("=" * 60)
+
+V019_DIR = os.path.join(OUTPUT_DIR, "v019_examples")
+os.makedirs(V019_DIR, exist_ok=True)
+_ROOT = Path(__file__).resolve().parent
+
+# 4.1 Native / NumPy fast_* API (re-exported on aion)
+print()
+print("4.1 aion fast_* + using_native_extension")
+x = [0.5, 1.0, 1.5]
+print("  using_native_extension:", aion.using_native_extension())
+print("  fast_sum:", aion.fast_sum(x), "fast_mean:", aion.fast_mean(x))
+print("  fast_softmax (3):", [round(float(v), 4) for v in aion.fast_softmax(x)])
+print("  fast_lower_bound / fast_upper_bound on sorted:", aion.fast_lower_bound([0.0, 0.5, 1.0], 0.5), aion.fast_upper_bound([0.0, 0.5, 1.0], 0.5))
+
+# 4.2 aion.datasets — temp text / CSV / JSONL + batching + schema
+print()
+print("4.2 aion.datasets")
+from aion.datasets import (
+    batch_processor,
+    iter_jsonl,
+    load_csv,
+    load_text,
+    validate_schema,
+)
+
+with tempfile.TemporaryDirectory() as _td:
+    _base = Path(_td)
+    (_base / "sample.txt").write_text("line one\nline two\n", encoding="utf-8")
+    (_base / "rows.csv").write_text("id,name\n1,alice\n2,bob\n", encoding="utf-8")
+    (_base / "rows.jsonl").write_text('{"id": 1, "ok": true}\n{"id": 2, "ok": false}\n', encoding="utf-8")
+    print("  load_text lines:", len(load_text(_base / "sample.txt").splitlines()))
+    print("  load_csv rows:", len(load_csv(_base / "rows.csv")))
+    print("  iter_jsonl count:", sum(1 for _ in iter_jsonl(_base / "rows.jsonl")))
+    rec = {"id": 3, "label": "x"}
+    print("  validate_schema:", validate_schema(rec, required_keys=("id", "label")))
+    print("  batch_processor:", list(batch_processor(list(range(7)), 3)))
+
+# 4.3 aion.io — atomic write, line iteration, SHA-256
+print()
+print("4.3 aion.io")
+from aion.io import atomic_write, file_sha256, iter_lines, verify_sha256
+
+with tempfile.TemporaryDirectory() as _td:
+    p = Path(_td) / "state.txt"
+    atomic_write(p, "a\nb\n")
+    print("  iter_lines:", list(iter_lines(p)))
+    h = file_sha256(p)
+    print("  file_sha256 prefix:", h[:12], "…")
+    print("  verify_sha256:", verify_sha256(p, h))
+
+# 4.4 aion.serialization — JSON + checkpoint sidecar metadata
+print()
+print("4.4 aion.serialization")
+from aion.serialization import checkpoint_meta, dumps_json_safe, read_json, write_json
+
+_meta_path = Path(V019_DIR) / "run_meta.json"
+write_json(_meta_path, checkpoint_meta(epoch=1, model_type="demo", extra={"note": "example.py"}))
+print("  read_json keys:", sorted(read_json(_meta_path).keys()))
+print("  dumps_json_safe (non-JSON value):", dumps_json_safe({"t": (1, 2)})[:40], "…")
+
+# 4.5 aion.providers — factory names + response parsing (no HTTP)
+print()
+print("4.5 aion.providers (offline)")
+from aion.providers import parse_chat_completion_response, supported_providers
+
+print("  supported_providers (sample):", supported_providers()[:4])
+_stub = {
+    "choices": [
+        {
+            "message": {
+                "role": "assistant",
+                "content": "Stub reply for example.py.",
+            }
+        }
+    ]
+}
+_turn = parse_chat_completion_response(_stub)
+print("  parse_chat_completion_response content:", _turn.content[:40], "…")
+
+# 4.6 aion.tools + aion.testing — tool loop without network
+print()
+print("4.6 aion.tools + aion.testing")
+from aion.providers.structured import AssistantTurn, NormalizedToolCall
+from aion.testing import FakeToolProvider, make_tool_turn
+from aion.tools import ToolRegistry, function_tool, run_tool_loop
+from aion.tools.rate_limit import TokenBucket
+
+
+def _add(a: float, b: float) -> float:
+    return float(a) + float(b)
+
+
+_reg = ToolRegistry()
+_reg.register("add", _add, required_arg_keys=["a", "b"])
+_tools = [
+    function_tool(
+        "add",
+        "Add two numbers.",
+        properties={
+            "a": {"type": "number"},
+            "b": {"type": "number"},
+        },
+        required=["a", "b"],
+    )
+]
+_tc = NormalizedToolCall(id="ex1", name="add", arguments_json='{"a": 2, "b": 3}')
+_provider = FakeToolProvider(
+    [
+        make_tool_turn([_tc], content=None),
+        AssistantTurn(content="Sum is 5.", tool_calls=[], raw={}),
+    ]
+)
+_msgs: list = [{"role": "user", "content": "2+3?"}]
+_final, _ = run_tool_loop(_provider, _msgs, _tools, _reg, max_rounds=4)
+print("  run_tool_loop final:", _final)
+_bucket = TokenBucket(rate_per_sec=100.0, capacity=10.0)
+_bucket.acquire(3.0)
+print("  TokenBucket: acquire(3) completed (100 tokens/s refill, capacity 10)")
+
+# 4.7 aion.rag — in-memory index + fake embeddings
+print()
+print("4.7 aion.rag")
+from aion.rag import SimpleRAGIndex
+
+
+def _fake_embed(text: str) -> np.ndarray:
+    rng = np.random.default_rng(abs(hash(text)) % (2**32))
+    return rng.standard_normal(12).astype(np.float64)
+
+
+_ridx = SimpleRAGIndex(embed_fn=_fake_embed)
+_n = _ridx.index_texts(["alpha beta gamma.", "delta epsilon."], chunk_size=64, overlap=0)
+_hits = _ridx.query("alpha", k=2)
+print("  SimpleRAGIndex chunks indexed:", _n, "query hits:", len(_hits))
+
+# 4.8 aion.config — dict merge + optional package sample TOML
+print()
+print("4.8 aion.config")
+from aion.config import deep_merge, get_nested, set_nested
+
+_cfg = {"app": {"name": "demo"}, "db": {"host": "localhost"}}
+_cfg = deep_merge(_cfg, {"app": {"debug": True}, "logging": {"level": "INFO"}})
+set_nested(_cfg, "app.version", "0.1.9")
+print("  get_nested app.debug:", get_nested(_cfg, "app.debug"))
+_sample_toml = _ROOT / "aion" / "config" / "examples" / "sample.toml"
+if _sample_toml.is_file():
+    try:
+        from aion.config import load_toml_file
+
+        _loaded = load_toml_file(_sample_toml)
+        print("  load_toml_file sample keys:", list(_loaded.keys())[:5])
+    except ImportError as e:
+        print("  load_toml_file skipped (install [config]):", e)
+else:
+    print("  load_toml_file skipped (sample.toml not found)")
+
+# 4.9 aion.env — parse a temp .env
+print()
+print("4.9 aion.env")
+from aion.env import load_dotenv_file
+
+with tempfile.TemporaryDirectory() as _td:
+    _envp = Path(_td) / ".env"
+    _envp.write_text('DEMO_FOO=bar\nDEMO_N=42\n', encoding="utf-8")
+    _parsed = load_dotenv_file(_envp, override=False)
+    print("  load_dotenv_file keys:", sorted(_parsed.keys()))
+
+# 4.10 aion.logging_utils
+print()
+print("4.10 aion.logging_utils")
+import logging
+
+from aion.logging_utils import setup_logging
+
+setup_logging(level=logging.WARNING)
+print("  setup_logging(level=WARNING) applied")
+
+# 4.11 aion.benchmarks
+print()
+print("4.11 aion.benchmarks")
+from aion.benchmarks import compare_sum_numpy_vs_fast, timed_run
+
+_, _stats = timed_run(lambda: sum(range(500)), repeats=3, warmup=1)
+print("  timed_run sum(range(500)) mean_s:", round(_stats["mean_s"], 8))
+_cmp = compare_sum_numpy_vs_fast(np.arange(10_000, dtype=np.float64), repeats=3)
+print("  compare_sum_numpy_vs_fast native:", _cmp["using_native_extension"])
+
+# 4.12 aion.algorithms.graphs — Dijkstra, components, unweighted shortest path
+print()
+print("4.12 aion.algorithms graphs (weighted + unweighted)")
+from aion.algorithms import connected_components, dijkstra, shortest_path_unweighted
+
+_wg = {"A": [("B", 1.0), ("C", 4.0)], "B": [("C", 2.0), ("D", 5.0)], "C": [("D", 1.0)], "D": []}
+print("  dijkstra A->:", dijkstra(_wg, "A"))
+_ug = {"a": ["b"], "b": ["c", "a"], "c": []}
+print("  connected_components count:", len(connected_components(_ug)))
+_dag = {"s": ["a", "b"], "a": ["t"], "b": ["t"], "t": []}
+print("  shortest_path_unweighted s->t:", shortest_path_unweighted(_dag, "s", "t"))
+
+# 4.13 aion.visualization — 3D plots + multi-page PDF of figures
+print()
+print("4.13 aion.visualization 3D + save_figures_pdf")
+from aion.visualization import figures_to_html_img_tags, plot_3d_scatter, plot_3d_surface, save_figures_pdf
+
+_fig_s = plot_3d_scatter([0, 1, 2], [0, 1, 0], [0, 0, 1], title="3D scatter (v0.1.9)", show=False)
+_xs = np.linspace(0.0, 1.0, 5)
+_ys = np.linspace(0.0, 1.0, 5)
+_Z = np.outer(_ys, _xs)  # shape (5, 5) for meshgrid(xs, ys)
+_fig_u = plot_3d_surface(_xs, _ys, _Z, title="3D surface (v0.1.9)", show=False)
+_pdf_path = os.path.join(V019_DIR, "v019_3d_bundle.pdf")
+save_figures_pdf([_fig_s, _fig_u], _pdf_path)
+_html_snip = figures_to_html_img_tags([_fig_s], fmt="png")
+print("  save_figures_pdf ->", _pdf_path)
+print("  figures_to_html_img_tags length:", len(_html_snip))
+from aion.visualization.utils import close_figure
+
+close_figure(_fig_s)
+close_figure(_fig_u)
+
+# 4.14 aion.pdf — symbol search, Markdown API index, static HTML API page
+print()
+print("4.14 aion.pdf (v0.1.9-style helpers)")
+from aion.pdf import create_api_documentation_html, export_api_index, search_public_api
+
+_hits = search_public_api("binary_search", include_classes=False)
+print("  search_public_api binary_search hits:", len(_hits))
+_idx_md = os.path.join(V019_DIR, "api_index_slice.md")
+export_api_index(output_file=_idx_md, format="md", include_classes=False)
+print("  export_api_index ->", _idx_md)
+_html_api = os.path.join(V019_DIR, "aion_api_min.html")
+create_api_documentation_html(output_file=_html_api)
+print("  create_api_documentation_html ->", _html_api)
+
+# 4.15 Optional: metrics + dataframe (extras)
+print()
+print("4.15 optional aion.metrics / aion.dataframe")
+try:
+    from aion.metrics import brier_score_binary
+
+    print("  brier_score_binary:", brier_score_binary([0, 1, 1, 0], [0.1, 0.9, 0.8, 0.2]))
+except Exception as e:  # noqa: BLE001
+    print("  metrics skipped:", e)
+try:
+    import pandas as pd
+
+    from aion.dataframe import assert_columns, train_val_split_rows
+
+    _df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert_columns(_df, ("a", "b"))
+    _tr, _va = train_val_split_rows(_df, val_fraction=0.34, seed=0)
+    print("  train_val_split_rows:", len(_tr), "train", len(_va), "val")
+except Exception as e:  # noqa: BLE001
+    print("  dataframe skipped:", e)
+
+print()
+print("All v0.1.9 examples finished; artifacts under", V019_DIR)
 print("Done.")

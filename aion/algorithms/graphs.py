@@ -24,8 +24,9 @@ Graphs are represented as adjacency lists: a mapping from node to list of neighb
 See also: aion/algorithms/README.md for full package documentation.
 """
 
-from typing import Dict, List, Any, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 from collections import deque
+import heapq
 
 
 def bfs(graph: Dict[Any, List[Any]], start: Any) -> List[Any]:
@@ -174,3 +175,96 @@ def toposort(graph: Dict[Any, List[Any]]) -> List[Any]:
     if len(order) != len(vertices):
         raise ValueError("Graph contains a cycle; topological sort is undefined")
     return order
+
+
+def dijkstra(
+    graph: Dict[Any, List[Tuple[Any, float]]],
+    start: Any,
+) -> Dict[Any, float]:
+    """
+    Shortest-path distances from ``start`` on a graph with non-negative edges.
+
+    ``graph[u]`` is a list of ``(v, weight)`` pairs. Unreachable nodes are omitted
+    from the returned dict.
+    """
+    dist: Dict[Any, float] = {start: 0.0}
+    pq: List[Tuple[float, Any]] = [(0.0, start)]
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist.get(u, float("inf")):
+            continue
+        for v, w in graph.get(u, []):
+            if w < 0:
+                raise ValueError("dijkstra requires non-negative edge weights")
+            nd = d + w
+            if nd < dist.get(v, float("inf")):
+                dist[v] = nd
+                heapq.heappush(pq, (nd, v))
+    return dist
+
+
+def connected_components(graph: Dict[Any, List[Any]]) -> List[List[Any]]:
+    """
+    Undirected view: each directed edge ``u -> v`` is treated as mutual.
+    Isolated vertices (keys with empty lists or nodes only appearing as neighbors)
+    are included.
+    """
+    verts: Set[Any] = set(graph.keys())
+    for u, nbrs in graph.items():
+        verts.update(nbrs)
+    und: Dict[Any, Set[Any]] = {v: set() for v in verts}
+    for u, nbrs in graph.items():
+        for v in nbrs:
+            und[u].add(v)
+            und[v].add(u)
+    seen: Set[Any] = set()
+    comps: List[List[Any]] = []
+    for s in verts:
+        if s in seen:
+            continue
+        comp: List[Any] = []
+        stack = [s]
+        while stack:
+            u = stack.pop()
+            if u in seen:
+                continue
+            seen.add(u)
+            comp.append(u)
+            for v in und.get(u, ()):
+                if v not in seen:
+                    stack.append(v)
+        comps.append(comp)
+    return comps
+
+
+def shortest_path_unweighted(
+    graph: Dict[Any, List[Any]],
+    start: Any,
+    end: Any,
+) -> Optional[List[Any]]:
+    """
+    BFS shortest path (fewest edges) in an unweighted directed graph.
+    Returns vertex list including start and end, or None if unreachable.
+    """
+    if start == end:
+        return [start]
+    prev: Dict[Any, Any] = {}
+    q: deque = deque([start])
+    seen = {start}
+    while q:
+        u = q.popleft()
+        for v in graph.get(u, []):
+            if v in seen:
+                continue
+            seen.add(v)
+            prev[v] = u
+            if v == end:
+                path = [end]
+                cur = end
+                while cur != start:
+                    cur = prev[cur]
+                    path.append(cur)
+                path.reverse()
+                return path
+            q.append(v)
+    return None

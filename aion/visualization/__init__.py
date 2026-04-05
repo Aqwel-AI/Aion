@@ -44,6 +44,9 @@ from .training import (
     plot_epoch_time,
 )
 
+from .three_d import plot_3d_scatter, plot_3d_surface
+from .report import figures_to_html_img_tags, save_figures_pdf
+
 __all__ = [
     "plot_array",
     "plot_histogram",
@@ -82,4 +85,8 @@ __all__ = [
     "plot_confidence_band",
     "plot_early_stopping",
     "plot_epoch_time",
+    "plot_3d_scatter",
+    "plot_3d_surface",
+    "save_figures_pdf",
+    "figures_to_html_img_tags",
 ]

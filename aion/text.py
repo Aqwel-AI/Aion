@@ -67,6 +67,29 @@ def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip())
 
 
+def clean_text_corpus(text: str) -> str:
+    """
+    Strip HTML-like tags, remove non-letter non-space characters (ASCII letters only),
+    then strip leading/trailing whitespace.
+
+    Intended for simple Latin-alphabet corpus cleaning. For multilingual or digit-preserving
+    cleaning, use :func:`clean_text` or build a custom pipeline.
+
+    Parameters
+    ----------
+    text : str
+        Raw document text.
+
+    Returns
+    -------
+    str
+        Cleaned text (ASCII letters and spaces only).
+    """
+    text = re.sub(r"<.*?>", "", text, flags=re.DOTALL)
+    text = re.sub(r"[^a-zA-Z\s]", "", text)
+    return text.strip()
+
+
 def detect_language(text: str) -> str:
     """Heuristic language detection (en/es/fr) from common words; returns 'unknown' if unclear."""
     text_lower = text.lower()
