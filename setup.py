@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for Aqwel-Aion v0.1.8
+Setup script for Aqwel-Aion v0.1.9
 Professional AI Research & Development Library
 
 Author: Aksel Aghajanyan
@@ -51,7 +51,7 @@ def _get_extensions():
 
 setup(
     name="aqwel-aion",
-    version="0.1.8",
+    version="0.1.9",
     author="Aksel Aghajanyan",
     maintainer="Aqwel AI Team",
     description=(
@@ -117,30 +117,50 @@ setup(
             "seaborn>=0.11.0",
         ],
 
-        # Machine learning and AI stack
+        # Transformer training (Aion Former: decoder-only, NumPy autograd)
+        "former": [
+            "matplotlib>=3.5.0",
+            "pyyaml>=6.0",
+        ],
+
+        # Machine learning and AI stack (keep in sync with pyproject.toml)
         "ai": [
             "scipy>=1.7.0",
             "scikit-learn>=1.0.0",
             "pandas>=1.3.0",
+            "matplotlib>=3.5.0",
             "transformers>=4.20.0",
             "torch>=1.12.0",
+            "openai>=1.0.0",
             "sentence-transformers>=2.2.0",
         ],
 
         # Documentation and export tools
         "docs": [
             "reportlab>=3.6.0",
-            "pillow>=8.0.0",
+            "pillow>=9.0.0",
         ],
 
         # Development tools
         "dev": [
-            "pytest>=6.0",
-            "black>=21.0",
-            "flake8>=3.8",
+            "pytest>=7.0",
+            "black>=23.0",
+            "flake8>=6.0",
         ],
 
-        # Full installation (all features)
+        "tools": [
+            "tiktoken>=0.5.0",
+        ],
+        "rag": [
+            "sentence-transformers>=2.2.0",
+            "faiss-cpu>=1.7.0",
+        ],
+        "config": [
+            "tomli>=2.0.0; python_version<'3.11'",
+            "pyyaml>=6.0",
+        ],
+
+        # Full installation (all features; keep in sync with pyproject.toml)
         "full": [
             "scipy>=1.7.0",
             "scikit-learn>=1.0.0",
@@ -153,7 +173,10 @@ setup(
             "faiss-cpu>=1.7.0",
             "sentence-transformers>=2.2.0",
             "reportlab>=3.6.0",
-            "pillow>=8.0.0",
+            "pillow>=9.0.0",
+            "tiktoken>=0.5.0",
+            "tomli>=2.0.0; python_version<'3.11'",
+            "pyyaml>=6.0",
         ],
     },
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aqwel-Aion v0.1.8 - Complete AI Research & Development Library
+Aqwel-Aion v0.1.9 - Complete AI Research & Development Library
 ==============================================================
 
 A comprehensive Python utility library by Aqwel AI for AI research,
@@ -27,7 +27,7 @@ https://aqwelai.xyz/
 """
 
 # Define the current version of the package
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 
 # Define the author information
 __author__ = "Aksel Aghajanyan"
@@ -44,6 +44,23 @@ from . import text
 
 # Import the file management module for file operations and organization
 from . import files
+
+# Safe I/O primitives
+from . import io
+
+# Remote LLM APIs (OpenAI, Gemini, Anthropic, OpenAI-compatible servers)
+from . import providers
+
+# Tool-calling helpers and RAG primitives
+from . import tools
+from . import rag
+
+# Config and environment
+from . import config
+from . import env
+
+# Timing / benchmarks
+from . import benchmarks
 
 # Import the code parsing module for language detection and code analysis
 from . import parser
@@ -74,9 +91,31 @@ from . import pdf
 # Import algorithms (search, arrays, graphs) and visualization (plots)
 from . import algorithms
 from . import visualization
+from . import former
 
-# Optional C++ extension (fast_sum; fallback to NumPy if not built)
-from ._core import fast_sum, using_native_extension
+# Optional C++ extension (fast numerical ops; fallback to NumPy if not built)
+from ._core import (
+    fast_sum,
+    fast_dot,
+    fast_norm2,
+    fast_norm1,
+    fast_mean,
+    fast_variance,
+    fast_argmax,
+    fast_argmin,
+    fast_min,
+    fast_max,
+    fast_relu,
+    fast_softmax,
+    fast_sigmoid,
+    fast_tanh,
+    fast_clip,
+    fast_cumsum,
+    fast_matrix_vector_mul,
+    fast_lower_bound,
+    fast_upper_bound,
+    using_native_extension,
+)
 
 # Define the public API exports for the package
 __all__ = [
@@ -87,6 +126,13 @@ __all__ = [
     "__copyright__",    # Copyright information
     "text",             # Text processing module
     "files",            # File management module
+    "io",               # Streaming, atomic writes, checksums
+    "providers",        # OpenAI / Gemini / Anthropic / compatible APIs
+    "tools",            # LLM tool schemas, registry, loop, retry, tokens
+    "rag",              # Chunking, vector stores, simple RAG index
+    "config",           # TOML/YAML config loading
+    "env",              # Dotenv-style and required env vars
+    "benchmarks",       # Timing and fast_* comparison helpers
     "parser",           # Code parsing module
     "watcher",          # File watching module
     "utils",            # Utilities module
@@ -101,6 +147,25 @@ __all__ = [
     "pdf",              # PDF documentation module
     "algorithms",       # Search, arrays, graph utilities
     "visualization",    # Array/matrix/training plotting
+    "former",          # Transformer training (decoder-only, NumPy autograd)
     "fast_sum",         # Fast 1D sum (C++ when built)
+    "fast_dot",         # Fast dot product (C++ when built)
+    "fast_norm2",       # Fast L2 norm (C++ when built)
+    "fast_norm1",       # Fast L1 norm (C++ when built)
+    "fast_mean",        # Fast mean (C++ when built)
+    "fast_variance",    # Fast variance (C++ when built)
+    "fast_argmax",      # Fast argmax (C++ when built)
+    "fast_argmin",      # Fast argmin (C++ when built)
+    "fast_min",         # Fast min reduction (C++ when built)
+    "fast_max",         # Fast max reduction (C++ when built)
+    "fast_relu",        # Fast ReLU (C++ when built)
+    "fast_softmax",     # Fast softmax (C++ when built)
+    "fast_sigmoid",     # Fast sigmoid (C++ when built)
+    "fast_tanh",        # Fast tanh (C++ when built)
+    "fast_clip",        # Fast clip to interval (C++ when built)
+    "fast_cumsum",      # Fast cumulative sum (C++ when built)
+    "fast_matrix_vector_mul",  # Fast matrix-vector product (C++ when built)
+    "fast_lower_bound",  # Fast lower_bound on sorted array (C++ when built)
+    "fast_upper_bound",  # Fast upper_bound on sorted array (C++ when built)
     "using_native_extension",
 ]

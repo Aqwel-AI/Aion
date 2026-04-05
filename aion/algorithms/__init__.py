@@ -15,7 +15,7 @@ Submodules (source files and their functions):
   interpolation_search
 - arrays.py: flatten_array, chunk_array, remove_duplicates, moving_avarage,
   flatten_deep, sliding_window, pad_array, rolling_sum, pairwise
-- graphs.py: bfs, dfs, toposort
+- graphs.py: bfs, dfs, toposort, dijkstra, connected_components, shortest_path_unweighted
 
 Full package documentation: see README.md in this directory.
 """
@@ -52,7 +52,14 @@ from .arrays import (
 )
 
 # graphs.py
-from .graphs import bfs, dfs, toposort
+from .graphs import (
+    bfs,
+    connected_components,
+    dfs,
+    dijkstra,
+    shortest_path_unweighted,
+    toposort,
+)
 
 __all__ = [
     # search.py
@@ -84,4 +91,7 @@ __all__ = [
     "bfs",
     "dfs",
     "toposort",
+    "dijkstra",
+    "connected_components",
+    "shortest_path_unweighted",
 ]

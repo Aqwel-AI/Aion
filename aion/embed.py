@@ -20,10 +20,13 @@ import hashlib
 from typing import List, Dict, Any, Optional, Union, Tuple, TYPE_CHECKING
 import numpy as np
 
+# Import can fail with ImportError (missing package) or ValueError / OSError when
+# sentence-transformers pulls sklearn built against a different NumPy ABI.
 try:
     from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
     _HAS_SENTENCE_TRANSFORMERS = True
-except ImportError:
+except (ImportError, OSError, ValueError, RuntimeError):
+    SentenceTransformer = None  # type: ignore[assignment, misc]
     _HAS_SENTENCE_TRANSFORMERS = False
 
 if TYPE_CHECKING:

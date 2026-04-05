@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aqwel-Aion v0.1.8 - AI Research & Development Library
+Aqwel-Aion v0.1.9 - AI Research & Development Library
 ======================================================
 
 Main entry point for the Aqwel-Aion utility library.
