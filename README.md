@@ -275,7 +275,9 @@ aion/
 │   │   ├── attention_demo_head0.png
 │   │   └── text_generation.py
 │   ├── examples_results/
-│   │   └── README.md
+│   │   ├── README.md
+│   │   ├── example_attention.png
+│   │   └── example_training_metrics.png
 │   ├── experiments/
 │   │   ├── README.md
 │   │   ├── __init__.py
@@ -389,7 +391,15 @@ aion/
 │   │   ├── 01_array_visualization.ipynb
 │   │   ├── 02_matrix_visualization.ipynb
 │   │   └── 03_training_visualization.ipynb
-│   ├── examples_visualization/  # Example PNG previews
+│   ├── examples_visualization/  # committed plot previews (*.png)
+│   │   ├── example_array.png
+│   │   ├── example_array_mean.png
+│   │   ├── example_confusion_matrix.png
+│   │   ├── example_histogram.png
+│   │   ├── example_matrix_heatmap.png
+│   │   ├── example_multiple_arrays.png
+│   │   ├── example_scatter.png
+│   │   └── example_training_history.png
 │   ├── matrices.py
 │   ├── report.py              # save_figures_pdf, figures_to_html_img_tags
 │   ├── three_d.py             # plot_3d_scatter, plot_3d_surface
@@ -399,6 +409,8 @@ aion/
 ```
 
 After a local build, you may also see **`aion/_aion_core*.so`** (macOS/Linux) or **`aion/_aion_core*.pyd`** (Windows) next to these sources; those binaries are compiled outputs, not part of the documented source tree. **`__pycache__/`** is created at import time.
+
+**Current `aion` surface (trimmed layout):** Subpackages on disk are **`algorithms`**, **`benchmarks`**, **`config`**, **`env`**, **`former`**, **`io`**, **`providers`**, **`rag`**, **`tools`**, and **`visualization`**, plus the single-file modules shown above (`maths.py`, `code.py`, …). There is **no** top-level **`aion.datasets`** or **`aion.dataframe`**; tabular/JSONL loading is left to the stdlib or **pandas**, and Former keeps **`aion.former.datasets`** for tokenizer + LM windows only. Removed helper packages (**`logging_utils`**, **`metrics`**, **`packaging`**, **`serialization`**, **`testing`**) are gone—use **`logging`**, **`aion.evaluate`**, **`import aion; aion.__version__`**, stdlib **JSON**, and **`aion.tools.FakeToolProvider`** as documented above.
 
 ### Design principles
 
@@ -543,7 +555,7 @@ python -m aion.cli
 aion
 ```
 
-The repository includes an `example.py` in the project root that demonstrates visualization and algorithms; run it with `python example.py` after installing with matplotlib available.
+The repository includes root **`example.py`**: algorithms and visualization (sections 1–3), plus v0.1.9 areas ( **`aion.io`**, providers, tools, RAG, config, env, benchmarks, graphs, 3D/PDF, **`aion.pdf`** ). Run **`python example.py`** after installing dependencies for the sections you need (e.g. matplotlib for plots; **`[config]`** for the TOML sample in section 4).
 
 ---
 
@@ -1035,7 +1047,7 @@ This repository is open source. The following **should show** (and are committed
 | **Source** | `aion/**/*.py`, `src/aion_core.cpp` |
 | **Tests** | Top-level `tests/` when present (pytest; `pip install -e ".[dev]"`); not always committed yet—see [Contributing](#contributing) |
 | **Examples** | `example.py`, `main.py`; notebooks in `aion/algorithms/examples/`, `aion/visualization/examples/`, `aion/config/examples/`; `python -m` demos under `aion/io/examples/`, `aion/providers/examples/`, `aion/rag/examples/`, `aion/tools/examples/`, `aion/former/*/examples/` |
-| **Example assets** | `aion/visualization/examples_visualization/*.png` (plot previews); `aion/former/examples/*.png` (attention demos); `aion/former/examples_results/` (see folder README; PNG outputs may be gitignored) |
+| **Example assets** | `aion/visualization/examples_visualization/*.png` (plot previews); `aion/former/examples/*.png` (attention demos); `aion/former/examples_results/*.png` when committed (see folder README) |
 | **Repo meta** | `.gitignore` |
 
 The following **do not show** (ignored via `.gitignore`):
@@ -1077,7 +1089,7 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Library Statistics
 
-- **30+ distinct subpackages and top-level modules** under `aion/` (core maths/code/embed/…, `io`, `providers`, `tools`, `rag`, `config`, `env`, `benchmarks`, `algorithms`, `visualization` with 3D/report helpers, `former`, optional native **`fast_*`** helpers on the top-level package).
+- **`aion/`** contains **10 subpackages** (`algorithms`, `benchmarks`, `config`, `env`, `former`, `io`, `providers`, `rag`, `tools`, `visualization`) and **16 top-level `.py` modules** (`__init__.py`, `_core.py`, `cli.py`, `code.py`, `embed.py`, `evaluate.py`, `files.py`, `git.py`, `maths.py`, `parser.py`, `pdf.py`, `prompt.py`, `snippets.py`, `text.py`, `utils.py`, `watcher.py`), plus optional native **`fast_*`** re-exports on the package.
 - **19 `fast_*` entry points** (plus `using_native_extension`) for 1D/2D vector numerics, re-exported from `aion`.
 - **71+ mathematical functions** in the maths module.
 - **Aion Former:** Decoder-only transformer training with NumPy autograd, multi-head attention, and visualization (optional `[former]` extra).
