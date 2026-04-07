@@ -29,7 +29,7 @@ while keeping standard search logic explicit and easy to reason about.
 See also: aion/algorithms/README.md for full package documentation.
 """
 
-from typing import List, Optional, TypeVar
+from typing import List, Optional, TypeVar, Union, Tuple
 
 T = TypeVar("T")
 
@@ -390,7 +390,7 @@ def exponential_search(slist: List[T], target: T) -> Optional[int]:
     return None
 
 
-def linear_search(ulist,target):
+def linear_search(ulist: List[Union[int, float]], target: Union[int, float]) -> str:
     '''
     A basic sequential search that iterates through the list from start to finish. It compares each element with the target until a match is found or the end of the list is reached.
     '''
@@ -413,7 +413,7 @@ def linear_search(ulist,target):
 
     return f"The number {target} is at index {i}"
 
-def First_Occurrence(ulist,target):
+def First_Occurrence(ulist: List[Union[int, float]], target: Union[int, float]) -> str:
     '''
     Scans the list from the beginning (index 0) to find the first instance of the target.
     '''
@@ -436,7 +436,7 @@ def First_Occurrence(ulist,target):
 
     return f"First occurrence of the number {target} is at index {i}"
     
-def Last_Occurrence(ulist,target):
+def Last_Occurrence(ulist: List[Union[int, float]], target: Union[int, float]) -> str:
     '''
     Scans the list from the end (index n-1) backwards to find the final instance of the target.
     '''
@@ -459,7 +459,7 @@ def Last_Occurrence(ulist,target):
 
     return f"Last occurrence of the number {target} is at index {i}"
 
-def First_Last_Occurrence(ulist,target):
+def First_Last_Occurrence(ulist: List[Union[int, float]], target: Union[int, float]) -> Tuple[str, str]:
     '''
     A composite function that returns the results of both searches as a tuple.
     '''
@@ -468,7 +468,7 @@ def First_Last_Occurrence(ulist,target):
 
     return First,Last
 
-def roatated_search(ulist,target):
+def roatated_search(ulist: List[Union[int, float]], target: Union[int, float]) -> str:
     '''
     An optimized algorithm for sorted lists that have been "rotated" at a pivot point (e.g., [4, 5, 6, 1, 2, 3]). It uses binary search logic to find the pivot point and then maps a standard binary search onto the rotated indices using an offset.
     '''
@@ -519,7 +519,7 @@ def roatated_search(ulist,target):
     return f"There isn't a number like {target}"
 
 
-def ternary_search(slist,target):
+def ternary_search(slist: List[Union[int, float]], target: Union[int, float]) -> str:
     '''
     A divide-and-conquer algorithm for sorted lists. Unlike binary search which splits the list in two, this splits the list into three equal segments using two midpoints. It reduces the search space by two-thirds in each iteration.
     '''
@@ -558,7 +558,7 @@ def ternary_search(slist,target):
 
     return f"There isn't a number like {target}"
 
-def interpolation_search(slist,target):
+def interpolation_search(slist: List[Union[int, float]], target: Union[int, float]) -> str:
     '''
     A specialized search for sorted, uniformly distributed numerical data. It "estimates" the position of the target based on the values at the high and low ends of the search range, similar to how a human looks for a word in a dictionary or a name in a phonebook.
     '''

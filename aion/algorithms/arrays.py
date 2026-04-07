@@ -5,7 +5,7 @@ Flattening, chunking, windowing, deduplication, rolling sums, and related
 helpers for list/sequence operations. Full package documentation:
 aion/algorithms/README.md
 """
-from typing import Any, Union
+from typing import Any, Union, Iterator
 
 def flatten_array(arr: list[list[Any]]) -> list[Any]:
     """
@@ -218,7 +218,7 @@ def flatten_deep(arr: list[list[Any]]) -> list[Any]:
     return flat_array
 
 
-def sliding_window(arr: list[Any], size: int):
+def sliding_window(arr: list[Any], size: int) -> Iterator[list[Any]]:
     """
     Generate consecutive sublists (windows) of a specified size.
 

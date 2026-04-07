@@ -21,6 +21,7 @@ import argparse
 import sys
 import os
 import signal
+import matplotlib
 
 try:
     from . import git
@@ -43,6 +44,80 @@ def run_command(command):
     return result.stdout.strip()
 
 
+def _build_parser():
+    parser = argparse.ArgumentParser(
+        description="Aqwel-Aion - AI utilities and research library CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+High-value commands:
+  aion info                      Show environment and optional dependencies
+  aion embed <file>              Embed a file (or use --text)
+  aion eval <preds> <answers>    Evaluate predictions
+  aion prompt --list             List prompt templates
+  aion watch <file>              Watch a file and re-embed on save
+  aion chat                      Interactive prompt tool
+
+Other commands:
+  aion git --help                Git repository tools
+  aion --version                 Show version
+        """,
+    )
+    parser.add_argument("--version", action="store_true", help="Show version and exit")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # info
+    subparsers.add_parser("info", help="Show environment and optional dependencies")
+
+    # embed
+    embed_parser = subparsers.add_parser("embed", help="Embed a file or text (sentence-transformers or hash fallback)")
+    embed_parser.add_argument("filepath", nargs="?", default=None, help="File to embed")
+    embed_parser.add_argument("--text", type=str, default=None, help="Text to embed (instead of file)")
+    embed_parser.add_argument("--model", type=str, default="all-MiniLM-L6-v2", help="Model name (default: all-MiniLM-L6-v2)")
+    embed_parser.add_argument("--output", "-o", type=str, default=None, help="Save vector to .npy file")
+
+    # eval
+    eval_parser = subparsers.add_parser("eval", help="Evaluate prediction accuracy (classification or regression)")
+    eval_parser.add_argument("preds", type=str, help="Predictions file (JSON, CSV, or text)")
+    eval_parser.add_argument("answers", type=str, help="Ground truth file (same format)")
+
+    # prompt
+    prompt_parser = subparsers.add_parser("prompt", help="Show or list prompt templates")
+    prompt_parser.add_argument("--type", "-t", type=str, default="system", help="Template type (system, code_review, etc.)")
+    prompt_parser.add_argument("--list", "-l", action="store_true", help="List available prompt types")
+
+    # watch
+    watch_parser = subparsers.add_parser("watch", help="Watch a file for changes and re-embed on save")
+    watch_parser.add_argument("filepath", type=str, help="File to watch")
+    watch_parser.add_argument("--interval", "-i", type=float, default=1.0, help="Poll interval in seconds (default: 1.0)")
+    watch_parser.add_argument("--output-dir", "-o", type=str, default=None, help="Directory to save .npy embeddings on change")
+
+    # chat
+    subparsers.add_parser("chat", help="Start interactive chat (prompt templates + embedding)")
+
+    # git
+    git_parser = subparsers.add_parser("git", help="Git repository operations")
+    git_subparsers = git_parser.add_subparsers(dest="git_command", help="Git commands")
+
+    git_status_parser = git_subparsers.add_parser("status", help="Show repository status")
+    git_status_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
+
+    git_log_parser = git_subparsers.add_parser("log", help="Show commit history")
+    git_log_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
+    git_log_parser.add_argument("--limit", type=int, default=10, help="Maximum number of commits to show")
+
+    git_branches_parser = git_subparsers.add_parser("branches", help="List all branches")
+    git_branches_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
+
+    git_diff_parser = git_subparsers.add_parser("diff", help="Show diff output")
+    git_diff_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
+    git_diff_parser.add_argument("--commit", help="Commit hash to diff against")
+
+    # version
+    subparsers.add_parser("version", help="Show package version")
+
+    return parser, git_parser
+
+
 def run_help():
     """
     Build the same parser structure as main() and return its --help output as a string.
@@ -50,34 +125,7 @@ def run_help():
     """
     from io import StringIO
 
-    parser = argparse.ArgumentParser(description="Aion CLI")
-    subparsers = parser.add_subparsers(dest="command")
-    parser.add_argument("--version", action="store_true")
-    subparsers.add_parser("version", help="Show package version")
-    subparsers.add_parser("info", help="Show environment and optional dependencies")
-    subparsers.add_parser("chat", help="Start interactive chat (prompt templates + embedding)")
-    embed_p = subparsers.add_parser("embed", help="Embed a file or text")
-    embed_p.add_argument("filepath", nargs="?", default=None)
-    embed_p.add_argument("--text", type=str, default=None)
-    embed_p.add_argument("--model", type=str, default="all-MiniLM-L6-v2")
-    embed_p.add_argument("--output", "-o", type=str, default=None)
-    eval_p = subparsers.add_parser("eval", help="Evaluate prediction accuracy")
-    eval_p.add_argument("preds", type=str)
-    eval_p.add_argument("answers", type=str)
-    prompt_p = subparsers.add_parser("prompt", help="Show or list prompt templates")
-    prompt_p.add_argument("--type", "-t", type=str, default="system")
-    prompt_p.add_argument("--list", "-l", action="store_true")
-    watch_p = subparsers.add_parser("watch", help="Watch file and re-embed on change")
-    watch_p.add_argument("filepath", type=str)
-    watch_p.add_argument("--interval", "-i", type=float, default=1.0)
-    watch_p.add_argument("--output-dir", "-o", type=str, default=None)
-    git_parser = subparsers.add_parser("git", help="Git repository operations")
-    git_subparsers = git_parser.add_subparsers(dest="git_command")
-    git_subparsers.add_parser("status", help="Show repository status").add_argument("--path", default=".")
-    git_subparsers.add_parser("log", help="Show commit history").add_argument("--path", default=".").add_argument("--limit", type=int, default=10)
-    git_subparsers.add_parser("branches", help="List all branches").add_argument("--path", default=".")
-    git_subparsers.add_parser("diff", help="Show diff output").add_argument("--path", default=".").add_argument("--commit")
-
+    parser, _ = _build_parser()
     help_io = StringIO()
     sys.stdout = help_io
     parser.print_help()
@@ -367,79 +415,7 @@ def main():
     Parse command-line arguments and dispatch to the appropriate subcommand.
     Prints help when no command is given or when a subcommand is unknown.
     """
-    parser = argparse.ArgumentParser(
-        description="Aqwel-Aion - AI utilities and research library CLI",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  aion --version                 Show version
-  aion info                      Show environment and dependencies
-  aion embed README.md           Embed a file
-  aion embed --text "hello"      Embed text
-  aion eval preds.txt answers.txt Evaluate predictions
-  aion prompt --type system      Show system prompt template
-  aion prompt --list             List prompt types
-  aion watch src/main.py         Watch file and re-embed on change
-  aion chat                      Interactive chat with prompt templates
-  aion git status                Show repository status
-  aion git log --limit 5         Show last 5 commits
-  aion git branches              List all branches
-  aion git diff                  Show working directory changes
-        """,
-    )
-    parser.add_argument("--version", action="store_true", help="Show version and exit")
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # version
-    subparsers.add_parser("version", help="Show package version")
-
-    # info
-    subparsers.add_parser("info", help="Show environment and optional dependencies")
-
-    # chat
-    subparsers.add_parser("chat", help="Start interactive chat (prompt templates + embedding)")
-
-    # embed
-    embed_parser = subparsers.add_parser("embed", help="Embed a file or text (sentence-transformers or hash fallback)")
-    embed_parser.add_argument("filepath", nargs="?", default=None, help="File to embed")
-    embed_parser.add_argument("--text", type=str, default=None, help="Text to embed (instead of file)")
-    embed_parser.add_argument("--model", type=str, default="all-MiniLM-L6-v2", help="Model name (default: all-MiniLM-L6-v2)")
-    embed_parser.add_argument("--output", "-o", type=str, default=None, help="Save vector to .npy file")
-
-    # eval
-    eval_parser = subparsers.add_parser("eval", help="Evaluate prediction accuracy (classification or regression)")
-    eval_parser.add_argument("preds", type=str, help="Predictions file (JSON, CSV, or text)")
-    eval_parser.add_argument("answers", type=str, help="Ground truth file (same format)")
-
-    # prompt
-    prompt_parser = subparsers.add_parser("prompt", help="Show or list prompt templates")
-    prompt_parser.add_argument("--type", "-t", type=str, default="system", help="Template type (system, code_review, etc.)")
-    prompt_parser.add_argument("--list", "-l", action="store_true", help="List available prompt types")
-
-    # watch
-    watch_parser = subparsers.add_parser("watch", help="Watch a file for changes and re-embed on save")
-    watch_parser.add_argument("filepath", type=str, help="File to watch")
-    watch_parser.add_argument("--interval", "-i", type=float, default=1.0, help="Poll interval in seconds (default: 1.0)")
-    watch_parser.add_argument("--output-dir", "-o", type=str, default=None, help="Directory to save .npy embeddings on change")
-
-    # git
-    git_parser = subparsers.add_parser("git", help="Git repository operations")
-    git_subparsers = git_parser.add_subparsers(dest="git_command", help="Git commands")
-
-    git_status_parser = git_subparsers.add_parser("status", help="Show repository status")
-    git_status_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
-
-    git_log_parser = git_subparsers.add_parser("log", help="Show commit history")
-    git_log_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
-    git_log_parser.add_argument("--limit", type=int, default=10, help="Maximum number of commits to show")
-
-    git_branches_parser = git_subparsers.add_parser("branches", help="List all branches")
-    git_branches_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
-
-    git_diff_parser = git_subparsers.add_parser("diff", help="Show diff output")
-    git_diff_parser.add_argument("--path", default=".", help="Repository path (default: current directory)")
-    git_diff_parser.add_argument("--commit", help="Commit hash to diff against")
-
+    parser, git_parser = _build_parser()
     args = parser.parse_args()
 
     if getattr(args, "version", False) or args.command == "version":

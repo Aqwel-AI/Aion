@@ -1,5 +1,6 @@
 include README.md
 include 0.1.9.png
+include aion/py.typed
 recursive-include aion *.py
 recursive-include aion/io *.md
 recursive-include aion/io/examples *.md *.py

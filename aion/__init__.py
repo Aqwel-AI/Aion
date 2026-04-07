@@ -61,6 +61,7 @@ from . import env
 
 # Timing / benchmarks
 from . import benchmarks
+from . import bench
 
 # Import the code parsing module for language detection and code analysis
 from . import parser
@@ -92,6 +93,7 @@ from . import pdf
 from . import algorithms
 from . import visualization
 from . import former
+from . import vision
 
 # Optional C++ extension (fast numerical ops; fallback to NumPy if not built)
 from ._core import (
@@ -133,6 +135,7 @@ __all__ = [
     "config",           # TOML/YAML config loading
     "env",              # Dotenv-style and required env vars
     "benchmarks",       # Timing and fast_* comparison helpers
+    "bench",            # Benchmarking + reproducibility utilities
     "parser",           # Code parsing module
     "watcher",          # File watching module
     "utils",            # Utilities module
@@ -148,6 +151,7 @@ __all__ = [
     "algorithms",       # Search, arrays, graph utilities
     "visualization",    # Array/matrix/training plotting
     "former",          # Transformer training (decoder-only, NumPy autograd)
+    "vision",           # Computer vision helpers
     "fast_sum",         # Fast 1D sum (C++ when built)
     "fast_dot",         # Fast dot product (C++ when built)
     "fast_norm2",       # Fast L2 norm (C++ when built)
