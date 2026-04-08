@@ -34,6 +34,14 @@ def _version_string():
     from . import __version__
     return __version__
 
+import subprocess
+import webbrowser
+import time
+
+def run_monitor():
+    subprocess.Popen(["uvicorn", "aion.monitor.server:app"])
+    time.sleep(2)
+    webbrowser.open("http://127.0.0.1:8000/docs")
 
 def run_command(command):
     """
@@ -141,6 +149,7 @@ def version_command():
 def info_command():
     """Print environment and optional dependency status."""
     from . import __version__
+    from . import embed
     print("Aqwel-Aion (aion) - Environment")
     print("=" * 50)
     print(f"Version:    {__version__}")

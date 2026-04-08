@@ -25,6 +25,11 @@ Copyright: 2025 Aqwel AI
 For documentation and examples, visit:
 https://aqwelai.xyz/
 """
+# Config and environment
+from . import config
+from . import env
+# Import the utilities module for general helper functions
+from . import utils
 
 # Define the current version of the package
 __version__ = "0.1.9"
@@ -55,9 +60,7 @@ from . import providers
 from . import tools
 from . import rag
 
-# Config and environment
-from . import config
-from . import env
+
 
 # Timing / benchmarks
 from . import benchmarks
@@ -69,11 +72,9 @@ from . import parser
 # Import the file watching module for real-time file monitoring
 from . import watcher
 
-# Import the utilities module for general helper functions
-from . import utils
 
-# Import the command-line interface module for CLI functionality
-from . import cli
+
+
 
 # Import the Git integration module for repository management
 from . import git
@@ -118,6 +119,10 @@ from ._core import (
     fast_upper_bound,
     using_native_extension,
 )
+
+
+# Import the command-line interface module for CLI functionality
+from . import cli
 
 # Define the public API exports for the package
 __all__ = [
