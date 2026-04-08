@@ -16,11 +16,13 @@ License: Apache-2.0
 Copyright: 2025 Aqwel AI
 """
 
-import subprocess
 import argparse
-import sys
 import os
 import signal
+import subprocess
+import sys
+import time
+
 import matplotlib
 
 try:
@@ -34,14 +36,22 @@ def _version_string():
     from . import __version__
     return __version__
 
-import subprocess
-import webbrowser
-import time
 
-def run_monitor():
-    subprocess.Popen(["uvicorn", "aion.monitor.server:app"])
-    time.sleep(2)
-    webbrowser.open("http://127.0.0.1:8000/docs")
+def run_monitor_command(
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    open_browser: bool = True,
+    open_docs: bool = False,
+) -> None:
+    """Delegate to ``aion.monitor.launch`` (keeps optional deps out of import graph until used)."""
+    from .monitor.launch import run_monitor_command as _run
+
+    _run(
+        host=host,
+        port=port,
+        open_browser=open_browser,
+        open_docs=open_docs,
+    )
 
 def run_command(command):
     """
@@ -67,7 +77,11 @@ High-value commands:
 
 Other commands:
   aion git --help                Git repository tools
+  aion monitor / dashboard       Hardware dashboard + API (needs pip install 'aqwel-aion[monitor]')
   aion --version                 Show version
+
+If ``aion`` is not found after pip install, your Python scripts directory is not on PATH.
+Use the same commands as: python3 -m aion …   (example: python3 -m aion monitor)
         """,
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
@@ -122,6 +136,32 @@ Other commands:
 
     # version
     subparsers.add_parser("version", help="Show package version")
+
+    # monitor / dashboard (optional deps: fastapi, uvicorn, psutil, nvidia-ml-py)
+    def _add_monitor_args(p):
+        p.add_argument("--host", default="127.0.0.1", help="Bind address")
+        p.add_argument("--port", "-p", type=int, default=8000, help="Port (default 8000)")
+        p.add_argument(
+            "--no-browser",
+            action="store_true",
+            help="Do not open a browser tab (dashboard at /dashboard/ by default)",
+        )
+        p.add_argument(
+            "--docs",
+            action="store_true",
+            help="Open Swagger UI (/docs) instead of the hardware dashboard",
+        )
+
+    mon_parser = subparsers.add_parser(
+        "monitor",
+        help="Start hardware dashboard and metrics API (install 'aqwel-aion[monitor]')",
+    )
+    _add_monitor_args(mon_parser)
+    dash_parser = subparsers.add_parser(
+        "dashboard",
+        help="Same as monitor: open live hardware dashboard in the browser",
+    )
+    _add_monitor_args(dash_parser)
 
     return parser, git_parser
 
@@ -457,6 +497,15 @@ def main():
         watch_command(args.filepath, interval=args.interval, output_dir=args.output_dir)
         return
 
+    if args.command in ("monitor", "dashboard"):
+        run_monitor_command(
+            host=args.host,
+            port=args.port,
+            open_browser=not args.no_browser,
+            open_docs=args.docs,
+        )
+        return
+
     if args.command == "git" and hasattr(args, "git_command"):
         if args.git_command == "status":
             git_status_command(args.path)
@@ -472,8 +521,3 @@ def main():
         git_parser.print_help()
     else:
         parser.print_help()
-
-
-
-def foo():
-    pass

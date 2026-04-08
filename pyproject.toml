@@ -36,6 +36,9 @@ dependencies = [
     "gitpython>=3.1.0",
 ]
 
+[project.scripts]
+aion = "aion.cli:main"
+
 [project.urls]
 Homepage = "https://aqwelai.xyz/"
 Documentation = "https://aqwelai.xyz/#/docs"
@@ -52,6 +55,12 @@ rag = [
 config = [
     "tomli>=2.0.0; python_version < \"3.11\"",
     "pyyaml>=6.0",
+]
+monitor = [
+    "psutil>=5.9.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.22.0",
+    "nvidia-ml-py>=12.0.0",
 ]
 dev = [
     "pytest>=7.0",
@@ -96,7 +105,15 @@ full = [
     "tiktoken>=0.5.0",
     "tomli>=2.0.0; python_version < \"3.11\"",
     "pyyaml>=6.0",
+    "psutil>=5.9.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.22.0",
+    "nvidia-ml-py>=12.0.0",
 ]
+
+[tool.setuptools.package-data]
+"aion.monitor" = ["static/*.html", "*.md"]
+"aion.monitor.examples" = ["*.md"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel", "pybind11>=2.10.0"]

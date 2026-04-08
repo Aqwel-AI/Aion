@@ -159,6 +159,12 @@ setup(
             "tomli>=2.0.0; python_version<'3.11'",
             "pyyaml>=6.0",
         ],
+        "monitor": [
+            "psutil>=5.9.0",
+            "fastapi>=0.100.0",
+            "uvicorn[standard]>=0.22.0",
+            "nvidia-ml-py>=12.0.0",
+        ],
 
         # Full installation (all features; keep in sync with pyproject.toml)
         "full": [
@@ -177,7 +183,15 @@ setup(
             "tiktoken>=0.5.0",
             "tomli>=2.0.0; python_version<'3.11'",
             "pyyaml>=6.0",
+            "psutil>=5.9.0",
+            "fastapi>=0.100.0",
+            "uvicorn[standard]>=0.22.0",
+            "nvidia-ml-py>=12.0.0",
         ],
+    },
+    package_data={
+        "aion.monitor": ["static/*.html", "*.md"],
+        "aion.monitor.examples": ["*.md"],
     },
 
     entry_points={
