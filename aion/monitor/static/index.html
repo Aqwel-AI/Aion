@@ -413,11 +413,17 @@
     charts.disk.data.datasets[1].data = slice.map(p => p.disk_write_mbps);
     charts.disk.update('none');
 
-    const nGpu = latest && latest.gpus ? latest.gpus.length : 0;
     const gw = document.getElementById('gpuWarn');
     const oldMeta = document.getElementById('gpuMeta');
     if (oldMeta) oldMeta.remove();
-    if (nGpu === 0) {
+    const gpus = latest && Array.isArray(latest.gpus) ? latest.gpus : null;
+    const nGpu = gpus ? gpus.length : 0;
+
+    if (!latest) {
+      gw.hidden = false;
+      gw.textContent = 'Waiting for metrics…';
+      destroyGpuCharts();
+    } else if (nGpu === 0) {
       gw.hidden = false;
       gw.textContent = 'No NVIDIA GPU detected. On Linux/Windows with NVIDIA drivers, install nvidia-ml-py or ensure nvidia-smi is on PATH.';
       lastNGpu = 0;
@@ -487,9 +493,11 @@
     document.querySelectorAll('#winToggle button').forEach(b => b.classList.toggle('active', b === btn));
   });
 
+  const SNAPSHOT_URL = new URL('../api/metrics/snapshot', window.location.href).href;
+
   async function tick() {
     try {
-      const r = await fetch('/api/metrics/snapshot');
+      const r = await fetch(SNAPSHOT_URL);
       if (!r.ok) throw new Error(r.status);
       const data = await r.json();
       updateFromPayload(data);
