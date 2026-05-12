@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for Aqwel-Aion v0.1.9
+Setup script for Aqwel-Aion v0.2.0
 Professional AI Research & Development Library
 
 Author: Aksel Aghajanyan
@@ -51,7 +51,7 @@ def _get_extensions():
 
 setup(
     name="aqwel-aion",
-    version="0.1.9",
+    version="0.2.0",
     author="Aksel Aghajanyan",
     maintainer="Aqwel AI Team",
     description=(

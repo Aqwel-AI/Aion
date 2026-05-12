@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aqwel-Aion v0.1.9 - Complete AI Research & Development Library
+Aqwel-Aion v0.2.0 - Complete AI Research & Development Library
 ==============================================================
 
 A comprehensive Python utility library by Aqwel AI for AI research,
@@ -16,6 +16,16 @@ This package provides:
 - Code analysis and quality assessment tools
 - File management and real-time monitoring
 - Git integration and version control utilities
+- Caching (LLM response cache, disk-backed, TTL, @cached decorator)
+- Advanced data structures (Trie, Bloom filter, LRU cache, heaps, Union-Find)
+- Data processing (CSV/JSON/JSONL loaders, splitting, augmentation, schemas)
+- Tokenization (BPE, WordPiece, vocabulary management)
+- Pipelines (step-based data/ML pipelines with retry and serialization)
+- Persistent storage (SQLite key-value store, vector store, chat history)
+- Experiment tracking (run logger, metrics, comparison)
+- LLM evaluation (similarity, faithfulness, toxicity, cost tracking)
+- Agent framework (ReAct, planning, multi-agent, conversation memory)
+- Serving (REST API for models, RAG, and chat via FastAPI)
 
 Author: Aksel Aghajanyan
 Developed by: Aqwel AI Team
@@ -32,7 +42,7 @@ from . import env
 from . import utils
 
 # Define the current version of the package
-__version__ = "0.1.9"
+__version__ = "0.2.0"
 
 # Define the author information
 __author__ = "Aksel Aghajanyan"
@@ -96,6 +106,39 @@ from . import visualization
 from . import former
 from . import vision
 
+# Caching (memory, disk, LLM response cache, @cached decorator)
+from . import cache
+
+# Advanced data structures (Trie, Bloom filter, LRU, heaps, Union-Find)
+from . import structures
+
+# Data processing (loaders, splitting, augmentation, schema validation)
+from . import data
+
+# Tokenization (BPE, WordPiece, vocabulary management)
+from . import tokenizer
+
+# Step-based pipelines
+from . import pipeline
+
+# Persistent storage (key-value, vector, chat history)
+from . import store
+
+# Experiment tracking (runs, metrics, comparison)
+from . import tracker
+
+# LLM output evaluation (similarity, faithfulness, toxicity, cost)
+from . import llm_eval
+
+# Agent framework (ReAct, planning, multi-agent, memory)
+from . import agents
+
+# REST API serving (FastAPI-based model/chat/RAG endpoints)
+from . import serve
+
+# Built-in benchmark datasets (Iris, Digits, Housing, Moons, NER, generators)
+from . import datasets
+
 # Optional C++ extension (fast numerical ops; fallback to NumPy if not built)
 from ._core import (
     fast_sum,
@@ -157,6 +200,17 @@ __all__ = [
     "visualization",    # Array/matrix/training plotting
     "former",          # Transformer training (decoder-only, NumPy autograd)
     "vision",           # Computer vision helpers
+    "cache",            # Memory/disk/LLM caching with TTL and @cached
+    "structures",       # Trie, Bloom filter, LRU cache, heaps, Union-Find
+    "data",             # CSV/JSON/JSONL loaders, splitting, augmentation
+    "tokenizer",        # BPE, WordPiece tokenizers, vocabulary management
+    "pipeline",         # Step-based data/ML pipelines
+    "store",            # SQLite key-value, vector store, chat history
+    "tracker",          # Experiment tracking (runs, metrics, comparison)
+    "llm_eval",         # LLM output evaluation and cost tracking
+    "agents",           # ReAct, planning, multi-agent framework
+    "serve",            # FastAPI-based model/chat/RAG serving
+    "datasets",         # Built-in benchmark datasets and generators
     "fast_sum",         # Fast 1D sum (C++ when built)
     "fast_dot",         # Fast dot product (C++ when built)
     "fast_norm2",       # Fast L2 norm (C++ when built)
