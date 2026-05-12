@@ -64,7 +64,7 @@ from .graphs import (
     dfs,
     toposort,
     dijkstra,
-    a_star,
+    a_star_search as a_star,
     bellman_ford,
     floyd_warshall,
     tarjan_scc,
@@ -72,7 +72,7 @@ from .graphs import (
     prim_mst,
     kruskal_mst,
     ford_fulkerson,
-    pagerank,
+    page_rank_simple as pagerank,
     connected_components,
 )
 

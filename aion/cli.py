@@ -68,6 +68,7 @@ def _build_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 High-value commands:
+  aion start                     Open the Aion Hub dashboard in the browser
   aion info                      Show environment and optional dependencies
   aion embed <file>              Embed a file (or use --text)
   aion eval <preds> <answers>    Evaluate predictions
@@ -86,6 +87,12 @@ Use the same commands as: python3 -m aion …   (example: python3 -m aion monito
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # start (hub)
+    start_parser = subparsers.add_parser("start", help="Open the Aion Hub dashboard in the browser")
+    start_parser.add_argument("--host", default="127.0.0.1", help="Bind address")
+    start_parser.add_argument("--port", "-p", type=int, default=3000, help="Port (default 3000)")
+    start_parser.add_argument("--no-browser", action="store_true", help="Do not open a browser tab")
 
     # info
     subparsers.add_parser("info", help="Show environment and optional dependencies")
@@ -469,6 +476,14 @@ def main():
 
     if getattr(args, "version", False) or args.command == "version":
         version_command()
+        return
+    if args.command == "start":
+        from .hub.launch import run_hub
+        run_hub(
+            host=args.host,
+            port=args.port,
+            open_browser=not args.no_browser,
+        )
         return
     if args.command == "info":
         info_command()

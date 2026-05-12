@@ -839,3 +839,48 @@ def spiral_order_traversal(matrix: List[List[Any]]) -> List[Any]:
                 res.append(matrix[i][left])
             left += 1
     return res
+
+
+def matrix_transpose(matrix: List[List[Any]]) -> List[List[Any]]:
+    """Transpose a 2D matrix (swap rows and columns)."""
+    if not matrix or not matrix[0]:
+        return []
+    rows, cols = len(matrix), len(matrix[0])
+    return [[matrix[r][c] for r in range(rows)] for c in range(cols)]
+
+
+def matrix_multiply(a: List[List[Union[int, float]]], b: List[List[Union[int, float]]]) -> List[List[float]]:
+    """Multiply two 2D matrices and return the result."""
+    rows_a, cols_a = len(a), len(a[0])
+    rows_b, cols_b = len(b), len(b[0])
+    if cols_a != rows_b:
+        raise ValueError(f"Incompatible shapes: ({rows_a}x{cols_a}) x ({rows_b}x{cols_b})")
+    result: List[List[float]] = [[0.0] * cols_b for _ in range(rows_a)]
+    for i in range(rows_a):
+        for j in range(cols_b):
+            for k in range(cols_a):
+                result[i][j] += a[i][k] * b[k][j]
+    return result
+
+
+def z_score_normalization(arr: List[Union[int, float]]) -> List[float]:
+    """Normalize values to z-scores (mean=0, std=1)."""
+    n = len(arr)
+    if n == 0:
+        return []
+    mean = sum(arr) / n
+    variance = sum((x - mean) ** 2 for x in arr) / n
+    std = variance ** 0.5
+    if std == 0:
+        return [0.0] * n
+    return [(x - mean) / std for x in arr]
+
+
+def min_max_scaling(arr: List[Union[int, float]], low: float = 0.0, high: float = 1.0) -> List[float]:
+    """Scale values to the range [low, high] using min-max normalization."""
+    if not arr:
+        return []
+    mn, mx = min(arr), max(arr)
+    if mn == mx:
+        return [(low + high) / 2] * len(arr)
+    return [low + (x - mn) / (mx - mn) * (high - low) for x in arr]

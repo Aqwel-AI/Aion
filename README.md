@@ -1,14 +1,14 @@
-![Aion 0.1.9 — Complete AI Research and Development Library by Aqwel AI](0.1.9.png)
+![Aion 0.2.0 — Complete AI Research and Development Library by Aqwel AI](0.1.9.png)
 
 # Aqwel-Aion
 
-**Aqwel-Aion v0.1.9 — Complete AI Research and Development Library**
+**Aqwel-Aion v0.2.0 — Complete AI Research and Development Library**
 
 [![PyPI](https://img.shields.io/pypi/v/aqwel-aion?label=PyPI)](https://pypi.org/project/aqwel-aion/)
 [![Python](https://img.shields.io/pypi/pyversions/aqwel-aion?label=Python)](https://pypi.org/project/aqwel-aion/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-Aion is an open-source Python library by **Aqwel AI** for research and production-style ML workflows: numerics and algorithms, **safe I/O**, **multi-vendor LLM clients**, **tool calling and RAG primitives**, visualization (including **3D** and multi-page reports), optional **native-accelerated** helpers, and small **infra utilities** (config, env, logging, benchmarks). Install only the extras you need—core usage stays lightweight.
+Aion is an open-source Python library by **Aqwel AI** for research and production-style ML workflows: numerics and algorithms, **safe I/O**, **multi-vendor LLM clients**, **tool calling and RAG primitives**, **autonomous agents** (ReAct, planning, multi-agent), **caching**, **data processing and tokenization**, **pipelines**, **persistent storage**, **experiment tracking**, **LLM evaluation**, **API serving**, visualization (including **3D** and multi-page reports), optional **native-accelerated** helpers, and small **infra utilities** (config, env, logging, benchmarks). Install only the extras you need—core usage stays lightweight.
 
 **Links:** [Website](https://aqwelai.xyz/) · [Documentation](https://aqwelai.xyz/#/docs) · [PyPI](https://pypi.org/project/aqwel-aion/)
 
@@ -31,7 +31,7 @@ Aion is an open-source Python library by **Aqwel AI** for research and productio
 
 - [Team Aqwel AI](#team-aqwel-ai)
 - [Overview](#overview)
-- [What's new in 0.1.9](#whats-new-in-019)
+- [What's new in 0.2.0](#whats-new-in-020)
 - [Architecture and structure](#architecture-and-structure)
 - [Package architecture and diagrams](#package-architecture-and-diagrams)
 - [Optional dependency matrix](#optional-dependency-matrix)
@@ -54,26 +54,74 @@ Aion is an open-source Python library by **Aqwel AI** for research and productio
 
 Aion gives you one coherent **import surface** (`import aion`) for work that usually spans half a dozen ad-hoc utilities: **linear algebra and stats**, **classical algorithms** (search, arrays, **graphs** with shortest paths and components), **plotting** (1D/2D/training/**3D**, PDF/HTML figure bundles), **embeddings and evaluation**, **PDF/docs generation**, and **systems-style helpers** (files, watcher, Git).
 
-**LLM-era additions** in recent releases include **`aion.providers`** (REST chat for OpenAI, Gemini, Anthropic, and OpenAI-compatible servers), **`aion.tools`** (schemas, registry, multi-turn **tool loops** with `complete_turn`), **`aion.rag`** (chunking, **vector stores**, optional FAISS, `SimpleRAGIndex`), plus **`aion.io`** for streaming reads, atomic writes, and checksums. **Developer experience** modules cover **config** (TOML/YAML + env merge), **`.env` loading**, **benchmarks**, and **`FakeToolProvider`** under **`aion.tools`** for offline tool-loop demos. Use the standard library **`logging`** for log configuration.
+**LLM-era additions** include **`aion.providers`** (REST chat for OpenAI, Gemini, Anthropic, and OpenAI-compatible servers), **`aion.tools`** (schemas, registry, multi-turn **tool loops** with `complete_turn`), **`aion.rag`** (chunking, **vector stores**, optional FAISS, `SimpleRAGIndex`), plus **`aion.io`** for streaming reads, atomic writes, and checksums.
 
-The design goal is simple: **progressive disclosure**—core installs stay small; heavy stacks are behind **named extras** (`[viz]`, `[ai]`, `[full]`, `[tools]`, `[rag]`, and others).
+**New in 0.2.0:** Ten new modules covering the full AI application stack — **`aion.agents`** (ReAct, planning, multi-agent orchestration with conversation memory), **`aion.cache`** (memory/disk/LLM caching with TTL), **`aion.data`** (CSV/JSON/JSONL loaders, dataset splitting, text augmentation, schema validation), **`aion.tokenizer`** (trainable BPE and WordPiece), **`aion.pipeline`** (step-based processing chains), **`aion.store`** (SQLite key-value, persistent vector store, chat history), **`aion.tracker`** (experiment logging and comparison), **`aion.llm_eval`** (similarity, faithfulness, toxicity, cost tracking), **`aion.structures`** (Trie, Bloom filter, LRU cache, heaps, Union-Find), and **`aion.serve`** (FastAPI endpoints for chat, RAG, and models).
+
+The design goal is simple: **progressive disclosure**—core installs stay small; heavy stacks are behind **named extras** (`[viz]`, `[ai]`, `[full]`, `[tools]`, `[rag]`, `[serve]`, and others).
 
 ---
 
-## What's new in 0.1.9
+## What's new in 0.2.0
 
-- **`aion.io`** — Streaming line/chunk reads, atomic writes (`atomic_write`, `atomic_write_bytes`, `save_automatically`), and SHA-256 file hashing/verification.
-- **`aion.providers`** — Chat-style clients for OpenAI, Google Gemini, Anthropic, and OpenAI-compatible HTTP APIs; factory helpers (`create_provider`, `supported_providers`) and typed errors (`ProviderError`). API keys use the usual vendor environment variables (see module docstrings).
-- **Optional native numerics** — `aion._core` (re-exported on `aion`) exposes reductions and vector ops: `fast_sum`, `fast_dot`, `fast_mean`, `fast_variance`, `fast_norm2`, `fast_norm1`, `fast_argmax`, `fast_argmin`, `fast_min`, `fast_max`, `fast_relu`, `fast_softmax`, `fast_sigmoid`, `fast_tanh`, `fast_clip`, `fast_cumsum`, `fast_matrix_vector_mul`, `fast_lower_bound`, `fast_upper_bound`, plus `using_native_extension`. Uses `aion._aion_core` when built with pybind11; otherwise NumPy fallbacks.
-- **Documentation helpers (`aion.pdf`)** — Static HTML API pages (`create_api_documentation_html`), symbol search (`search_public_api`), per-module references (`create_module_reference_doc`), Markdown API index export (`export_api_index(..., format="md")`), optional **class** introspection (`generate_module_documentation(..., include_classes=True)`), and INDEX entries for HTML / Markdown artifacts.
-- **Tests** — When a top-level `tests/` tree is present, run with `pytest` after `pip install -e ".[dev]"`.
-- **`aion.tools`** — `function_tool`, `ToolRegistry`, `run_tool_loop` with `OpenAIProvider.complete_turn`; `post_json_with_retry`, `TokenBucket`, optional token estimates (`[tools]` → tiktoken).
-- **`aion.rag`** — `chunk_text`, `MemoryVectorStore`, `FaissVectorStore` (if FAISS installed), `SimpleRAGIndex` (`[rag]` extra).
-- **`aion.config` / `aion.env`** — Load TOML/YAML, deep-merge layered configs, dotted key access, merge `AION_*` env overrides, optional string→bool/number coercion; parse `.env`. Notebook: `aion/config/examples/01_config_loading_merge.ipynb`.
-- **`aion.benchmarks`** — Timings and NumPy vs `fast_*` comparisons. Offline tool-loop demos use **`aion.tools.FakeToolProvider`** / **`make_tool_turn`**. Package version: **`import aion; aion.__version__`**.
-- **Graphs** — `dijkstra`, `connected_components`, `shortest_path_unweighted`.
-- **Visualization** — `plot_3d_scatter`, `plot_3d_surface`, `save_figures_pdf`, `figures_to_html_img_tags`.
-- **Providers** — Structured `complete_turn` → `AssistantTurn` with `tool_calls` (OpenAI + OpenAI-compatible).
+Version 0.2.0 adds **10 new modules** spanning the full AI application lifecycle — from data loading and tokenization through agent orchestration and API serving.
+
+### Agent framework (`aion.agents`)
+- **`ReActAgent`** — Observe/think/act loop with tool calling, configurable memory, and step logging.
+- **`PlanningAgent`** — Task decomposition into numbered sub-steps, then tool-assisted execution of each.
+- **`MultiAgent`** — Role-based orchestrator that delegates sub-tasks to specialized agents and synthesizes results.
+- **Conversation memory** — `SlidingWindowMemory` (last N messages), `SummaryMemory` (LLM-compressed history), `TokenBudgetMemory` (fit within a token limit).
+
+### Caching (`aion.cache`)
+- **`MemoryCache`** — Thread-safe in-memory cache with optional per-key TTL and max-size eviction.
+- **`DiskCache`** — SQLite-backed persistent cache with TTL.
+- **`LLMCache`** — Cache LLM completions keyed by (messages, model, temperature); tracks hit/miss statistics.
+- **`@cached` decorator** — Transparently cache any function's return value (memory or custom backend).
+
+### Data processing (`aion.data`)
+- **Loaders** — `load_csv`, `load_json`, `load_jsonl` with encoding and schema options; matching `save_*` functions.
+- **Splitting** — `train_test_split`, `train_val_test_split`, `kfold_split` with optional stratification.
+- **Text augmentation** — `random_delete`, `random_swap`, `random_insert`, `synonym_replace`, `augment_text`.
+- **Schema validation** — `Schema`, `Field`, `validate_record`, `validate_dataset` for tabular data.
+
+### Tokenization (`aion.tokenizer`)
+- **`BPETokenizer`** — Trainable byte-pair encoding: train on a corpus, encode/decode, save/load.
+- **`WordPieceTokenizer`** — BERT-style sub-word tokenizer with `##` continuation tokens.
+- **`Vocabulary`** — Bidirectional token↔id mapping with special tokens (`<pad>`, `<unk>`, `<bos>`, `<eos>`), save/load to JSON.
+
+### Pipelines (`aion.pipeline`)
+- **`Pipeline`** — Sequential chain of `Step` objects with per-step timing, retry, fallback, dry-run, and JSON serialization.
+- **Built-in steps** — `FunctionStep`, `MapStep`, `FilterStep`, `BatchStep`.
+
+### Persistent storage (`aion.store`)
+- **`KeyValueStore`** — SQLite key-value store with namespace support.
+- **`PersistentVectorStore`** — SQLite-backed vector store with brute-force cosine similarity search.
+- **`ChatHistoryStore`** — Persistent conversation threads with message history, listing, and full-text search.
+
+### Experiment tracking (`aion.tracker`)
+- **`Tracker` / `Run`** — Log parameters, metrics (with step tracking), tags, and artifacts to a local directory.
+- **`compare_runs` / `best_run`** — Sort and compare runs by any metric.
+
+### LLM evaluation (`aion.llm_eval`)
+- **Semantic similarity** — `semantic_similarity`, `batch_similarity`, `relevance_score` using embeddings.
+- **Faithfulness** — `faithfulness_score`, `check_groundedness` to verify RAG outputs against source documents.
+- **Safety** — `toxicity_check` (keyword-based), `contains_pii` (emails, phones, SSNs, credit cards, IPs).
+- **Cost tracking** — `estimate_cost` per provider, `CostTracker` for cumulative usage and spend.
+
+### Data structures (`aion.structures`)
+- **`Trie`** — Prefix tree for autocomplete and prefix search.
+- **`BloomFilter`** — Probabilistic membership testing with tunable false-positive rate.
+- **`LRUCache`** — Bounded least-recently-used cache with O(1) get/set and hit-rate tracking.
+- **`MinHeap` / `MaxHeap` / `PriorityQueue`** — Heap-based priority queues.
+- **`UnionFind`** — Disjoint-set with path compression and union by rank.
+
+### API serving (`aion.serve`)
+- **`AionServer` / `create_app`** — FastAPI application exposing `/chat`, `/rag`, `/health` endpoints.
+- Custom route registration, CORS enabled. Reuses the same `[serve]` / `[monitor]` FastAPI dependency.
+
+### Bug fixes
+- Fixed missing `matrix_transpose`, `matrix_multiply`, `z_score_normalization`, `min_max_scaling` functions in `aion.algorithms.arrays`.
+- Fixed `a_star` and `pagerank` import name mismatches in `aion.algorithms.graphs`.
 
 ---
 
@@ -92,18 +140,38 @@ flowchart TB
   Foundation[Foundation NumPy plus stdlib]
   Core[Core maths algorithms parser code files text utils watcher evaluate]
   DataIO[io streaming and atomic writes]
+  DataProc[data loaders splitting augmentation and tokenizer]
   LLM[providers tools and embed]
   RAGModule[rag]
+  Agents[agents ReAct planning multi-agent]
+  Cache[cache memory disk LLM]
+  Structures[structures Trie BloomFilter LRU heaps UnionFind]
   VizDoc[visualization and pdf]
   Former[former transformer stack]
+  Pipeline[pipeline step chains]
+  Store[store kv vectors chat history]
+  Tracker[tracker experiment runs]
+  LLMEval[llm_eval similarity faithfulness cost]
+  Serve[serve FastAPI endpoints]
   Ops[config env benchmarks]
   Foundation --> Core
+  Foundation --> Structures
   Core --> DataIO
+  Core --> DataProc
   Core --> LLM
   DataIO --> RAGModule
   LLM --> RAGModule
+  LLM --> Agents
+  LLM --> LLMEval
+  LLM --> Serve
+  RAGModule --> Agents
+  RAGModule --> Serve
   Core --> VizDoc
   Core --> Former
+  Core --> Pipeline
+  Foundation --> Cache
+  Foundation --> Store
+  Foundation --> Tracker
   Foundation --> Ops
 ```
 
@@ -118,12 +186,32 @@ flowchart LR
     D["aion.providers"]
     E["aion.tools"]
     F["aion.rag"]
+    G["aion.agents"]
+    H["aion.cache"]
+    I["aion.data"]
+    J["aion.tokenizer"]
+    K["aion.pipeline"]
+    L["aion.store"]
+    M["aion.tracker"]
+    N["aion.llm_eval"]
+    O["aion.serve"]
+    P["aion.structures"]
   end
   A --> B
   A --> C
   A --> D
   D --> E
   A --> F
+  D --> G
+  A --> H
+  A --> I
+  A --> J
+  A --> K
+  A --> L
+  A --> M
+  A --> N
+  A --> O
+  A --> P
 ```
 
 #### Tool-calling loop (OpenAI-shaped providers)
@@ -164,9 +252,18 @@ flowchart LR
 - **Single package:** Public APIs live under `aion`. Prefer `import aion` and attribute access, or explicit `from aion.X import …` for subpackages.
 - **Core single-file modules:** `maths`, `code`, `embed`, `evaluate`, `files`, `git`, `parser`, `pdf`, `prompt`, `snippets`, `text`, `utils`, `watcher`, `cli`, plus **`_core`** (`fast_*` bridge to optional native code).
 - **Data and control plane:** `io` (streaming, atomic writes, checksums), `config` (implementation in `config/core.py`), `env`.
+- **Data processing:** `data` (CSV/JSON/JSONL loaders, splitting, augmentation, schema validation), `tokenizer` (BPE, WordPiece, vocabulary management).
 - **LLM surface:** `providers` (chat REST, `complete` and `complete_turn` where supported), `tools` (OpenAI-style tool JSON, registry, retries, token bucket, optional tiktoken).
 - **Retrieval:** `rag` (chunking, `MemoryVectorStore`, optional `FaissVectorStore`, `SimpleRAGIndex`).
-- **Algorithms and visualization:** `algorithms` (search, arrays, **graphs**: BFS, DFS, toposort, Dijkstra, components, unweighted shortest path), `visualization` (1D/2D/training/**3D**, `save_figures_pdf`, HTML figure bundles).
+- **Agents:** `agents` (ReAct, planning, multi-agent orchestration with sliding-window, summary, and token-budget memory).
+- **Evaluation:** `llm_eval` (semantic similarity, faithfulness, toxicity, PII detection, cost tracking).
+- **Caching:** `cache` (in-memory, SQLite disk, LLM-specific; TTL; `@cached` decorator).
+- **Storage:** `store` (SQLite key-value, persistent vector store, chat history).
+- **Pipelines:** `pipeline` (step-based chains with retry, fallback, timing, serialization).
+- **Tracking:** `tracker` (experiment run logger with metrics, params, artifacts, comparison).
+- **Data structures:** `structures` (Trie, Bloom filter, LRU cache, heaps, Union-Find).
+- **Serving:** `serve` (FastAPI-based `/chat`, `/rag`, `/health` endpoints).
+- **Algorithms and visualization:** `algorithms` (search, arrays, **graphs**: BFS, DFS, toposort, Dijkstra, A*, components, MST, max flow, PageRank), `visualization` (1D/2D/training/**3D**, `save_figures_pdf`, HTML figure bundles).
 - **Former:** NumPy autograd transformer training (`aion.former.*`), including **`aion.former.datasets`** for tokenizer and text windows.
 - **Quality:** `benchmarks`.
 - **Optional dependencies:** Heavy stacks behind extras (`[viz]`, `[ai]`, `[docs]`, `[full]`, `[tools]`, `[rag]`, `[config]`, …). LLM calls need network + API keys. **No `eval`** in tool execution—arguments are JSON-parsed and passed to registered callables only.
@@ -211,6 +308,12 @@ Top-level names follow **lexicographic** order (`ls | sort`). This tree reflects
 aion/
 ├── __init__.py                # Version, metadata, public submodule exports
 ├── _core.py                   # fast_* → optional aion._aion_core or NumPy
+├── agents/
+│   ├── __init__.py
+│   ├── memory.py              # SlidingWindowMemory, SummaryMemory, TokenBudgetMemory
+│   ├── react.py               # ReActAgent (observe/think/act loop)
+│   ├── planner.py             # PlanningAgent (decompose → execute)
+│   └── multi.py               # MultiAgent (role-based delegation)
 ├── algorithms/
 │   ├── README.md
 │   ├── __init__.py
@@ -223,6 +326,11 @@ aion/
 │   └── search.py
 ├── benchmarks/
 │   └── __init__.py            # timed_run, compare_sum_numpy_vs_fast
+├── cache/
+│   ├── __init__.py
+│   ├── core.py                # Cache protocol, MemoryCache, DiskCache
+│   ├── decorator.py           # @cached decorator
+│   └── llm_cache.py           # LLMCache (prompt-keyed response cache)
 ├── cli.py
 ├── code.py
 ├── config/
@@ -235,6 +343,12 @@ aion/
 │       ├── 01_config_loading_merge.ipynb
 │       ├── sample.toml
 │       └── sample_override.yaml
+├── data/
+│   ├── __init__.py
+│   ├── loaders.py             # load_csv, load_json, load_jsonl + save_*
+│   ├── splitting.py           # train_test_split, train_val_test_split, kfold_split
+│   ├── augmentation.py        # random_delete, random_swap, synonym_replace, augment_text
+│   └── schema.py              # Schema, Field, validate_record, validate_dataset
 ├── embed.py
 ├── env/
 │   └── __init__.py            # load_dotenv_file, require_env
@@ -320,6 +434,12 @@ aion/
 │           ├── __init__.py
 │           └── demo_attention_plot.py
 ├── git.py
+├── llm_eval/
+│   ├── __init__.py
+│   ├── similarity.py          # semantic_similarity, batch_similarity, relevance_score
+│   ├── faithfulness.py        # faithfulness_score, check_groundedness
+│   ├── toxicity.py            # toxicity_check, contains_pii
+│   └── cost.py                # estimate_cost, CostTracker
 ├── io/
 │   ├── README.md
 │   ├── __init__.py
@@ -333,6 +453,10 @@ aion/
 ├── maths.py
 ├── parser.py
 ├── pdf.py
+├── pipeline/
+│   ├── __init__.py
+│   ├── core.py                # Pipeline, Step, PipelineResult
+│   └── steps.py               # FunctionStep, MapStep, FilterStep, BatchStep
 ├── prompt.py
 ├── providers/
 │   ├── README.md
@@ -364,8 +488,28 @@ aion/
 │       ├── README.md
 │       ├── __init__.py
 │       └── demo_simple_index.py
+├── serve/
+│   ├── __init__.py
+│   └── app.py                 # AionServer, create_app (FastAPI chat/RAG/health)
 ├── snippets.py
+├── store/
+│   ├── __init__.py
+│   ├── kv.py                  # KeyValueStore (SQLite)
+│   ├── vector.py              # PersistentVectorStore (SQLite + cosine search)
+│   └── chat_history.py        # ChatHistoryStore (threads + messages)
+├── structures/
+│   ├── __init__.py
+│   ├── trie.py                # Trie (prefix tree)
+│   ├── bloom_filter.py        # BloomFilter
+│   ├── lru.py                 # LRUCache
+│   ├── priority_queue.py      # MinHeap, MaxHeap, PriorityQueue
+│   └── union_find.py          # UnionFind (disjoint-set)
 ├── text.py
+├── tokenizer/
+│   ├── __init__.py
+│   ├── bpe.py                 # BPETokenizer (byte-pair encoding)
+│   ├── wordpiece.py           # WordPieceTokenizer (BERT-style)
+│   └── vocab.py               # Vocabulary (token↔id mapping)
 ├── tools/
 │   ├── README.md
 │   ├── __init__.py
@@ -380,6 +524,10 @@ aion/
 │       ├── README.md
 │       ├── __init__.py
 │       └── demo_tool_loop.py
+├── tracker/
+│   ├── __init__.py
+│   ├── core.py                # Tracker, Run (experiment logging)
+│   └── compare.py             # compare_runs, best_run
 ├── utils.py
 ├── visualization/
 │   ├── README.md
@@ -410,7 +558,7 @@ aion/
 
 After a local build, you may also see **`aion/_aion_core*.so`** (macOS/Linux) or **`aion/_aion_core*.pyd`** (Windows) next to these sources; those binaries are compiled outputs, not part of the documented source tree. **`__pycache__/`** is created at import time.
 
-**Current `aion` surface (trimmed layout):** Subpackages on disk are **`algorithms`**, **`benchmarks`**, **`config`**, **`env`**, **`former`**, **`io`**, **`providers`**, **`rag`**, **`tools`**, and **`visualization`**, plus the single-file modules shown above (`maths.py`, `code.py`, …). There is **no** top-level **`aion.datasets`** or **`aion.dataframe`**; tabular/JSONL loading is left to the stdlib or **pandas**, and Former keeps **`aion.former.datasets`** for tokenizer + LM windows only. Removed helper packages (**`logging_utils`**, **`metrics`**, **`packaging`**, **`serialization`**, **`testing`**) are gone—use **`logging`**, **`aion.evaluate`**, **`import aion; aion.__version__`**, stdlib **JSON**, and **`aion.tools.FakeToolProvider`** as documented above.
+**Current `aion` surface (trimmed layout):** Subpackages on disk are **`agents`**, **`algorithms`**, **`benchmarks`**, **`cache`**, **`config`**, **`data`**, **`env`**, **`former`**, **`io`**, **`llm_eval`**, **`pipeline`**, **`providers`**, **`rag`**, **`serve`**, **`store`**, **`structures`**, **`tokenizer`**, **`tools`**, **`tracker`**, and **`visualization`**, plus the single-file modules shown above (`maths.py`, `code.py`, …). Data loading uses **`aion.data`** for CSV/JSON/JSONL; Former keeps **`aion.former.datasets`** for tokenizer + LM windows. Tokenization uses **`aion.tokenizer`** for BPE/WordPiece.
 
 ### Design principles
 
@@ -425,7 +573,7 @@ After a local build, you may also see **`aion/_aion_core*.so`** (macOS/Linux) or
 
 | Extra | Purpose | Notable dependencies |
 |-------|---------|----------------------|
-| *(base)* | Core library | `numpy`, `watchdog`, `gitpython` |
+| *(base)* | Core library (incl. data, cache, structures, pipeline, store, tracker, tokenizer, llm_eval, agents) | `numpy`, `watchdog`, `gitpython` |
 | `[viz]` | Plots (1D/2D/3D, reports) | `matplotlib`, `seaborn` |
 | `[former]` | Aion Former training | `matplotlib`, `pyyaml` |
 | `[ai]` | ML / transformers / pandas | `torch`, `transformers`, `pandas`, `scikit-learn`, … |
@@ -434,9 +582,11 @@ After a local build, you may also see **`aion/_aion_core*.so`** (macOS/Linux) or
 | `[tools]` | Token counting for prompts | `tiktoken` |
 | `[rag]` | Embeddings + FAISS index | `sentence-transformers`, `faiss-cpu` |
 | `[config]` | TOML on older Python + YAML | `tomli` (3.8–3.10), `pyyaml` |
+| `[serve]` | REST API serving | `fastapi`, `uvicorn` |
+| `[monitor]` | Hardware dashboard | `psutil`, `fastapi`, `uvicorn`, `nvidia-ml-py` |
 | `[full]` | Convenience “everything” set | Combines most stacks above (+ OpenAI client, tiktoken, etc.) |
 
-Combine extras as needed, e.g. `pip install "aqwel-aion[viz,tools]"` or editable `pip install -e ".[dev,full]"` from a clone.
+Combine extras as needed, e.g. `pip install "aqwel-aion[viz,tools,serve]"` or editable `pip install -e ".[dev,full]"` from a clone.
 
 ---
 
@@ -474,6 +624,7 @@ pip install aqwel-aion[dev]    # Development: pytest, black, flake8
 pip install aqwel-aion[tools]  # tiktoken for token estimates
 pip install aqwel-aion[rag]    # sentence-transformers + faiss-cpu
 pip install aqwel-aion[config] # tomli on Python 3.8–3.10 + PyYAML
+pip install aqwel-aion[serve]  # FastAPI + uvicorn for aion.serve
 ```
 
 ### Editable install (for development)
@@ -527,7 +678,7 @@ pip install -e .[dev,full]
 
 ```python
 import aion
-print(aion.__version__)  # 0.1.9
+print(aion.__version__)     # 0.2.0
 print(aion.__author__)      # Aksel Aghajanyan
 print(aion.__developer__)   # Aqwel AI Team
 ```
@@ -617,6 +768,37 @@ The repository includes root **`example.py`**: algorithms and visualization (sec
 - **Real-time monitoring:** File change detection and callbacks via the watcher module.
 - **Git integration:** Status, commit history, branches, diffs, file history (optional dependency: GitPython).
 - **Utilities and CLI:** General helpers and command-line interface for common operations.
+
+### Caching and Storage (new in 0.2.0)
+
+- **Caching (`aion.cache`):** Thread-safe `MemoryCache` and SQLite `DiskCache` with per-key TTL; `LLMCache` for prompt-keyed response caching; `@cached` decorator for any function.
+- **Persistent storage (`aion.store`):** `KeyValueStore` (SQLite with namespaces), `PersistentVectorStore` (cosine-similarity vector search), `ChatHistoryStore` (conversation threads with full-text search).
+
+### Data Processing and Tokenization (new in 0.2.0)
+
+- **Data (`aion.data`):** `load_csv`, `load_json`, `load_jsonl` loaders with matching savers; `train_test_split`, `train_val_test_split`, `kfold_split` with stratification; text augmentation (`random_delete`, `random_swap`, `random_insert`, `synonym_replace`, `augment_text`); schema validation (`Schema`, `Field`, `validate_record`, `validate_dataset`).
+- **Tokenization (`aion.tokenizer`):** Trainable `BPETokenizer` (byte-pair encoding) and `WordPieceTokenizer` (BERT-style `##` continuations); `Vocabulary` with special tokens, save/load to JSON.
+
+### Data Structures (new in 0.2.0)
+
+- **`aion.structures`:** `Trie` (prefix tree for autocomplete), `BloomFilter` (probabilistic membership), `LRUCache` (bounded O(1) cache), `MinHeap`/`MaxHeap`/`PriorityQueue`, `UnionFind` (disjoint-set with path compression).
+
+### Pipelines and Tracking (new in 0.2.0)
+
+- **Pipelines (`aion.pipeline`):** `Pipeline` with composable `Step` objects; built-in `FunctionStep`, `MapStep`, `FilterStep`, `BatchStep`; per-step timing, retry, fallback, dry-run, JSON serialization.
+- **Experiment tracking (`aion.tracker`):** `Tracker`/`Run` for logging parameters, metrics (with step tracking), tags, and artifacts to local JSON files; `compare_runs`/`best_run` for experiment comparison.
+
+### LLM Evaluation (new in 0.2.0)
+
+- **`aion.llm_eval`:** `semantic_similarity`/`batch_similarity` (embedding-based); `faithfulness_score`/`check_groundedness` for RAG output verification; `toxicity_check` and `contains_pii` for safety; `estimate_cost`/`CostTracker` for LLM spend tracking across providers.
+
+### Agent Framework (new in 0.2.0)
+
+- **`aion.agents`:** `ReActAgent` (observe/think/act loop with tool calling), `PlanningAgent` (task decomposition then execution), `MultiAgent` (role-based delegation to specialized sub-agents); conversation memory strategies: `SlidingWindowMemory`, `SummaryMemory`, `TokenBudgetMemory`.
+
+### API Serving (new in 0.2.0)
+
+- **`aion.serve`:** `AionServer`/`create_app` builds a FastAPI application with `/chat`, `/rag`, `/health` endpoints; custom route registration; CORS enabled. Install with `[serve]`.
 
 ### Aion Former — Transformer training
 
@@ -939,6 +1121,224 @@ index.index_texts(["alpha research", "beta notes"], chunk_size=32, overlap=8)
 hits = index.query("alpha", k=2)
 ```
 
+### Caching
+
+```python
+from aion.cache import MemoryCache, DiskCache, LLMCache, cached
+
+# In-memory cache with 5-minute TTL
+cache = MemoryCache(default_ttl=300)
+cache.set("result", {"accuracy": 0.95})
+cache.get("result")  # {"accuracy": 0.95}
+
+# Disk-backed persistent cache (SQLite)
+disk = DiskCache(".my_cache.db", default_ttl=3600)
+disk.set("config", {"lr": 0.001})
+
+# LLM response cache (avoid repeated API calls)
+llm_cache = LLMCache("disk", db_path=".llm_cache.db", default_ttl=86400)
+# llm_cache.get(messages, model="gpt-4") → cached response or None
+
+# Decorator: cache any function
+@cached(ttl=60)
+def expensive_computation(x):
+    return x ** 2
+```
+
+### Data processing
+
+```python
+from aion.data import load_csv, load_jsonl, train_val_test_split, augment_text
+from aion.data import Schema, Field, validate_dataset
+
+# Load data
+rows = load_csv("dataset.csv")
+records = load_jsonl("data.jsonl")
+
+# Split with stratification
+train, val, test = train_val_test_split(
+    rows, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15, seed=42,
+    stratify_key=lambda r: r["label"],
+)
+
+# Text augmentation
+variants = augment_text("The quick brown fox jumps", num_variants=4, seed=42)
+
+# Schema validation
+schema = Schema(fields=[
+    Field("name", str, required=True),
+    Field("age", int, required=True, validator=lambda x: 0 < x < 150),
+    Field("email", str, required=False),
+])
+result = validate_dataset(rows, schema)
+# {"valid": True/False, "total": N, "errors": {...}}
+```
+
+### Tokenization
+
+```python
+from aion.tokenizer import BPETokenizer, WordPieceTokenizer
+
+# Train a BPE tokenizer on your corpus
+bpe = BPETokenizer(vocab_size=8000)
+bpe.train(["Your training text here..."] * 100)
+ids = bpe.encode("hello world")
+text = bpe.decode(ids)  # "hello world"
+bpe.save("my_tokenizer.json")
+
+# WordPiece (BERT-style)
+wp = WordPieceTokenizer(vocab_size=8000)
+wp.train(["Your training text here..."] * 100)
+tokens = wp.tokenize("unbelievable")  # ["un", "##believ", "##able"]
+```
+
+### Data structures
+
+```python
+from aion.structures import Trie, BloomFilter, LRUCache, UnionFind, PriorityQueue
+
+# Trie for autocomplete
+trie = Trie()
+trie.insert("python"); trie.insert("pytorch"); trie.insert("pandas")
+trie.starts_with("py")  # ["python", "pytorch"]
+
+# Bloom filter for fast membership checks
+bf = BloomFilter(expected_items=100_000, fp_rate=0.01)
+bf.add("seen_user_123")
+bf.might_contain("seen_user_123")  # True
+
+# LRU cache
+lru = LRUCache(capacity=1000)
+lru.set("key", "value")
+
+# Union-Find for connected components
+uf = UnionFind()
+uf.union("A", "B"); uf.union("B", "C")
+uf.connected("A", "C")  # True
+
+# Priority queue
+pq = PriorityQueue()
+pq.push("low-priority", priority=10)
+pq.push("urgent", priority=1)
+pq.pop()  # (1, "urgent")
+```
+
+### Pipelines
+
+```python
+from aion.pipeline import Pipeline, MapStep, FilterStep, FunctionStep
+
+pipe = Pipeline([
+    MapStep("tokenize", lambda text: text.lower().split()),
+    FilterStep("remove_short", lambda tokens: len(tokens) > 2),
+    FunctionStep("count", lambda data, ctx: {"count": len(data), "data": data}),
+])
+result = pipe.execute(["Hello World", "Hi", "Good morning everyone"])
+detailed = pipe.execute_detailed(["Hello World", "Hi", "Good morning everyone"])
+print(detailed.total_ms)  # execution time
+```
+
+### Persistent storage
+
+```python
+from aion.store import KeyValueStore, PersistentVectorStore, ChatHistoryStore
+import numpy as np
+
+# Key-value store
+kv = KeyValueStore("app.db")
+kv.set("user:1", {"name": "Alice", "role": "admin"}, namespace="users")
+kv.get("user:1")  # {"name": "Alice", "role": "admin"}
+
+# Persistent vector store
+vs = PersistentVectorStore("vectors.db", dimension=384)
+vs.add("doc1", np.random.randn(384).astype(np.float32), text="First document")
+results = vs.query(np.random.randn(384).astype(np.float32), top_k=5)
+
+# Chat history
+chat = ChatHistoryStore("chat.db")
+thread_id = chat.create_thread(title="Support conversation")
+chat.add_message(thread_id, "user", "How do I reset my password?")
+chat.add_message(thread_id, "assistant", "Go to Settings > Security...")
+thread = chat.get_thread(thread_id)
+```
+
+### Experiment tracking
+
+```python
+from aion.tracker import Tracker
+
+tracker = Tracker(".experiments")
+run = tracker.start_run("baseline_v1")
+run.log_params({"lr": 0.001, "batch_size": 32, "epochs": 10})
+
+for epoch in range(10):
+    loss = 1.0 / (epoch + 1)  # simulated
+    run.log_metric("loss", loss)
+    run.log_metric("accuracy", 1 - loss * 0.5)
+
+run.end()
+# Compare all runs
+best = tracker.compare_runs(metric_name="loss")
+```
+
+### LLM evaluation
+
+```python
+from aion.llm_eval import toxicity_check, contains_pii, estimate_cost, CostTracker
+
+# Safety checks
+tox = toxicity_check("Your LLM output here")
+pii = contains_pii("Contact john@example.com or 555-123-4567")
+print(pii)  # {"has_pii": True, "findings": {"email": [...], "phone": [...]}, ...}
+
+# Cost tracking across multiple calls
+tracker = CostTracker()
+tracker.record("openai", prompt_tokens=1500, completion_tokens=800)
+tracker.record("anthropic", prompt_tokens=2000, completion_tokens=1000)
+print(tracker.summary())
+# {"total_cost_usd": 0.031, "total_tokens": 5300, "call_count": 2, ...}
+```
+
+### Agents (requires LLM provider + API key)
+
+```python
+from aion.agents import ReActAgent, PlanningAgent, SlidingWindowMemory
+from aion.providers import OpenAIProvider
+from aion.tools import ToolRegistry, function_tool
+
+# Set up tools
+registry = ToolRegistry()
+registry.register("calculate", lambda expression: str(eval(expression)))
+tools = [function_tool("calculate", "Evaluate a math expression",
+         properties={"expression": {"type": "string"}}, required=["expression"])]
+
+# ReAct agent (reason + act loop)
+agent = ReActAgent(
+    provider=OpenAIProvider(),
+    registry=registry,
+    tools=tools,
+    memory=SlidingWindowMemory(window_size=20, system_prompt="You are a helpful assistant."),
+)
+answer = agent.run("What is 234 * 567?")
+
+# Planning agent (decompose → execute)
+planner = PlanningAgent(provider=OpenAIProvider(), registry=registry, tools=tools)
+result = planner.run("Calculate the average of 100, 200, and 300")
+```
+
+### API serving (requires pip install aqwel-aion[serve])
+
+```python
+from aion.serve import create_app
+from aion.providers import OpenAIProvider
+
+# Create a FastAPI app with /chat and /health endpoints
+app = create_app(provider=OpenAIProvider())
+# Run with: uvicorn module:app --port 8000
+# POST /chat  {"messages": [{"role": "user", "content": "Hello"}]}
+# GET  /health → {"status": "ok", "version": "0.2.0"}
+```
+
 ### Aion Former — transformer training (optional: pip install aqwel-aion[former])
 
 ```python
@@ -996,12 +1396,22 @@ Run from command line: `python -m aion.former.experiments.train_small_model`, `p
 | `aion.config` | TOML/YAML load, layered files, dotted keys, env merge, typed coercion (`[config]`). See [`aion/config/README.md`](aion/config/README.md) and [`aion/config/examples/`](aion/config/examples/). |
 | `aion.env` | `.env` file parsing, `require_env`. |
 | `aion.benchmarks` | `timed_run`, NumPy vs `fast_sum` comparison. |
+| `aion.cache` | `MemoryCache`, `DiskCache` (SQLite), `LLMCache`, `@cached` decorator — all with TTL. |
+| `aion.structures` | `Trie`, `BloomFilter`, `LRUCache`, `MinHeap`, `MaxHeap`, `PriorityQueue`, `UnionFind`. |
+| `aion.data` | CSV/JSON/JSONL loaders, `train_val_test_split`, `kfold_split`, text augmentation, `Schema` validation. |
+| `aion.tokenizer` | `BPETokenizer`, `WordPieceTokenizer`, `Vocabulary` (save/load, special tokens). |
+| `aion.pipeline` | `Pipeline`, `Step`, `FunctionStep`, `MapStep`, `FilterStep`, `BatchStep` — retry, fallback, timing. |
+| `aion.store` | `KeyValueStore` (SQLite), `PersistentVectorStore`, `ChatHistoryStore` (threads + search). |
+| `aion.tracker` | `Tracker`, `Run` — log params, metrics, artifacts; `compare_runs`, `best_run`. |
+| `aion.llm_eval` | `semantic_similarity`, `faithfulness_score`, `check_groundedness`, `toxicity_check`, `contains_pii`, `estimate_cost`, `CostTracker`. |
+| `aion.agents` | `ReActAgent`, `PlanningAgent`, `MultiAgent`, `AgentRole`, `SlidingWindowMemory`, `SummaryMemory`, `TokenBudgetMemory`. |
+| `aion.serve` | `AionServer`, `create_app` — FastAPI `/chat`, `/rag`, `/health` endpoints (`[serve]`). |
 
 Package entry point and version:
 
 ```python
 import aion
-print(aion.__version__)  # 0.1.9
+print(aion.__version__)  # 0.2.0
 ```
 
 ---
@@ -1089,13 +1499,15 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Library Statistics
 
-- **`aion/`** contains **10 subpackages** (`algorithms`, `benchmarks`, `config`, `env`, `former`, `io`, `providers`, `rag`, `tools`, `visualization`) and **16 top-level `.py` modules** (`__init__.py`, `_core.py`, `cli.py`, `code.py`, `embed.py`, `evaluate.py`, `files.py`, `git.py`, `maths.py`, `parser.py`, `pdf.py`, `prompt.py`, `snippets.py`, `text.py`, `utils.py`, `watcher.py`), plus optional native **`fast_*`** re-exports on the package.
+- **`aion/`** contains **20 subpackages** (`agents`, `algorithms`, `benchmarks`, `cache`, `config`, `data`, `env`, `former`, `io`, `llm_eval`, `pipeline`, `providers`, `rag`, `serve`, `store`, `structures`, `tokenizer`, `tools`, `tracker`, `visualization`) and **16 top-level `.py` modules** (`__init__.py`, `_core.py`, `cli.py`, `code.py`, `embed.py`, `evaluate.py`, `files.py`, `git.py`, `maths.py`, `parser.py`, `pdf.py`, `prompt.py`, `snippets.py`, `text.py`, `utils.py`, `watcher.py`), plus optional native **`fast_*`** re-exports on the package.
+- **61 public exports** in `aion.__all__` (up from 51 in v0.1.9).
 - **19 `fast_*` entry points** (plus `using_native_extension`) for 1D/2D vector numerics, re-exported from `aion`.
 - **71+ mathematical functions** in the maths module.
 - **Aion Former:** Decoder-only transformer training with NumPy autograd, multi-head attention, and visualization (optional `[former]` extra).
-- **Full research pipeline** from data and algorithms through visualization and documentation.
-- **Optional dependencies** for embeddings, PDF generation, and full ML stack; core and algorithms work with minimal dependencies (e.g. numpy, standard library).
+- **Agent framework:** ReAct, planning, and multi-agent orchestration with pluggable conversation memory.
+- **Full AI pipeline** from data loading, tokenization, and augmentation through training, evaluation, caching, experiment tracking, and API serving.
+- **Optional dependencies** for embeddings, PDF generation, serving, and full ML stack; core modules (maths, algorithms, data, structures, cache, pipeline, store, tracker, tokenizer, agents, llm_eval) work with minimal dependencies (numpy + stdlib).
 
 ---
 
-Aion is built so teams can move from **numeric and algorithmic baselines** to **LLM-assisted workflows**, **retrieval**, and **publication-ready figures**—with a single, versioned library and clear optional extras.
+Aion is built so teams can move from **numeric and algorithmic baselines** to **LLM-assisted workflows**, **autonomous agents**, **retrieval**, **experiment tracking**, and **production serving**—with a single, versioned library and clear optional extras.

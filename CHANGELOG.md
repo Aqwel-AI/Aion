@@ -5,6 +5,27 @@ All notable changes to the Aqwel-Aion project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-05-12
+
+### Added — 10 New Modules
+- **`aion.agents`** — Autonomous agent framework: `ReActAgent` (observe/think/act loop), `PlanningAgent` (task decomposition), `MultiAgent` (role-based orchestration); conversation memory: `SlidingWindowMemory`, `SummaryMemory`, `TokenBudgetMemory`.
+- **`aion.cache`** — Caching with TTL: `MemoryCache` (in-memory, thread-safe), `DiskCache` (SQLite-backed), `LLMCache` (prompt-keyed response cache with hit/miss stats), `@cached` decorator.
+- **`aion.data`** — Data processing: `load_csv`/`load_json`/`load_jsonl` loaders + savers; `train_test_split`, `train_val_test_split`, `kfold_split` with stratification; text augmentation (`random_delete`, `random_swap`, `random_insert`, `synonym_replace`, `augment_text`); schema validation (`Schema`, `Field`, `validate_record`, `validate_dataset`).
+- **`aion.tokenizer`** — Trainable tokenizers: `BPETokenizer` (byte-pair encoding), `WordPieceTokenizer` (BERT-style), `Vocabulary` (bidirectional token-to-id mapping, special tokens, save/load).
+- **`aion.pipeline`** — Step-based processing pipelines: `Pipeline`, `Step`, `FunctionStep`, `MapStep`, `FilterStep`, `BatchStep`; per-step timing, retry, fallback, dry-run, JSON serialization.
+- **`aion.store`** — Persistent storage: `KeyValueStore` (SQLite with namespaces), `PersistentVectorStore` (cosine similarity search), `ChatHistoryStore` (conversation threads with full-text search).
+- **`aion.tracker`** — Experiment tracking: `Tracker`/`Run` for logging params, metrics, tags, artifacts; `compare_runs`/`best_run` for experiment comparison. All data stored as local JSON.
+- **`aion.llm_eval`** — LLM output evaluation: `semantic_similarity`/`batch_similarity`, `faithfulness_score`/`check_groundedness`, `toxicity_check`/`contains_pii`, `estimate_cost`/`CostTracker`.
+- **`aion.structures`** — Advanced data structures: `Trie`, `BloomFilter`, `LRUCache`, `MinHeap`/`MaxHeap`/`PriorityQueue`, `UnionFind`.
+- **`aion.serve`** — REST API serving: `AionServer`/`create_app` with FastAPI `/chat`, `/rag`, `/health` endpoints; custom route registration; CORS.
+
+### Added — New extras
+- **`[serve]`** optional dependency group: `fastapi`, `uvicorn`.
+
+### Fixed
+- Missing `matrix_transpose`, `matrix_multiply`, `z_score_normalization`, `min_max_scaling` in `aion.algorithms.arrays`.
+- `a_star` and `pagerank` import name mismatches in `aion.algorithms.__init__`.
+
 ## [0.1.9] - 2026-03-29
 
 ### Added
